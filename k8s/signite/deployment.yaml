@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: signite-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: signite
+  template:
+    metadata:
+      labels:
+        app: signite
+    spec:
+      containers:
+      - name: signite-backend
+        image: signite-backend:v8
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "docker"
+        - name: SPRING_REDIS_HOST
+          value: "redis"
+        - name: SPRING_REDIS_PORT
+          value: "6379"
+        - name: SPRING_REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-secret
+              key: redis-password 

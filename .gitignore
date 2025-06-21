@@ -1,0 +1,28 @@
+# Gradle
+backend/.gradle/
+backend/build/
+backend/gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.vscode/
+.idea/
+*.iml
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Docker
+.dockerignore
+
+# Kubernetes secrets (if any)
+k8s/**/*secret*.yaml
+
+# Temporary files
+*.tmp
+*.swp
+*.swo

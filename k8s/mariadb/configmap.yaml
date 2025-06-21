@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mariadb-config
+data:
+  init.sql: |
+    CREATE DATABASE IF NOT EXISTS signite;
+    USE signite;
+    GRANT ALL PRIVILEGES ON signite.* TO 'root'@'%';
+    FLUSH PRIVILEGES; 
