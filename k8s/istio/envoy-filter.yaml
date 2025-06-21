@@ -1,0 +1,65 @@
+# JWT Claims를 HTTP 헤더로 변환하는 Envoy Filter
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: jwt-claims-to-headers
+  namespace: default
+spec:
+  workloadSelector:
+    labels:
+      app: signite-backend
+  configPatches:
+  - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        filterChain:
+          filter:
+            name: "envoy.filters.network.http_connection_manager"
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: envoy.filters.http.lua
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+          inline_code: |
+            function envoy_on_request(request_handle)
+              -- JWT Claims에서 사용자 정보 추출
+              local headers = request_handle:headers()
+              
+              -- JWT가 이미 검증된 후 Envoy가 설정한 헤더들을 가져오기
+              local user_id = headers:get("x-jwt-claim-user_id")
+              local username = headers:get("x-jwt-claim-username") 
+              local email = headers:get("x-jwt-claim-email")
+              local role = headers:get("x-jwt-claim-role")
+              local organization_id = headers:get("x-jwt-claim-organization_id")
+              local image_url = headers:get("x-jwt-claim-image_url")
+              local github_url = headers:get("x-jwt-claim-github_url")
+              local summary = headers:get("x-jwt-claim-summary")
+              
+              -- 애플리케이션에서 사용할 헤더로 변환
+              if user_id then
+                request_handle:headers():add("X-User-Id", user_id)
+              end
+              if username then
+                request_handle:headers():add("X-User-Name", username)
+              end
+              if email then
+                request_handle:headers():add("X-User-Email", email)
+              end
+              if role then
+                request_handle:headers():add("X-User-Role", role)
+              end
+              if organization_id then
+                request_handle:headers():add("X-Organization-Id", organization_id)
+              end
+              if image_url then
+                request_handle:headers():add("X-User-Image", image_url)
+              end
+              if github_url then
+                request_handle:headers():add("X-User-Github", github_url)
+              end
+              if summary then
+                request_handle:headers():add("X-User-Summary", summary)
+              end
+            end 

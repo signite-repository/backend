@@ -1,0 +1,146 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nats-config
+  namespace: default
+data:
+  nats.conf: |
+    # NATS JetStream Configuration
+    server_name: nats-signite
+    
+    # Network
+    port: 4222
+    monitor_port: 8222
+    
+    # JetStream
+    jetstream {
+      store_dir: "/data/jetstream"
+      max_mem: 256M
+      max_file: 1G
+    }
+    
+    # Cluster (for future scaling)
+    cluster {
+      name: "signite-nats-cluster"
+      port: 6222
+      routes = [
+        nats://nats-0.nats:6222
+      ]
+    }
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nats
+  namespace: default
+  labels:
+    app: nats
+spec:
+  ports:
+  - port: 4222
+    name: client
+    targetPort: 4222
+  - port: 6222
+    name: cluster
+    targetPort: 6222
+  - port: 8222
+    name: monitor
+    targetPort: 8222
+  clusterIP: None
+  selector:
+    app: nats
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nats-client
+  namespace: default
+  labels:
+    app: nats
+spec:
+  ports:
+  - port: 4222
+    name: client
+    targetPort: 4222
+  selector:
+    app: nats
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nats
+  namespace: default
+  labels:
+    app: nats
+spec:
+  serviceName: nats
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nats
+  template:
+    metadata:
+      labels:
+        app: nats
+    spec:
+      containers:
+      - name: nats
+        image: nats:2.10-alpine
+        ports:
+        - containerPort: 4222
+          name: client
+        - containerPort: 6222
+          name: cluster
+        - containerPort: 8222
+          name: monitor
+        command:
+        - "nats-server"
+        - "--config"
+        - "/etc/nats-config/nats.conf"
+        
+        # Resource limits
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+            
+        # Volume mounts
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/nats-config
+        - name: jetstream-storage
+          mountPath: /data/jetstream
+          
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8222
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8222
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
+          
+      volumes:
+      - name: config-volume
+        configMap:
+          name: nats-config
+          
+  volumeClaimTemplates:
+  - metadata:
+      name: jetstream-storage
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 1Gi 

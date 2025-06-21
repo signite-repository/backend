@@ -19,10 +19,36 @@ Thumbs.db
 # Docker
 .dockerignore
 
-# Kubernetes secrets (if any)
-k8s/**/*secret*.yaml
+# 🔒 SECURITY: Environment & Secrets
+*.env
+.env*
+**/secrets/
+**/*secret*.yaml
+**/*secret*.yml
+**/*password*
+**/*credential*
+**/*token*
+*.key
+*.pem
+*.p12
+*.keystore
+
+# 🔒 SECURITY: Kubernetes secrets
+k8s/**/secret.yaml
+k8s/**/secrets/
+k8s/**/*secret*
+
+# 🔒 SECURITY: Application configs with sensitive data
+**/application-prod.yml
+**/application-production.yml
+**/application-local.yml
 
 # Temporary files
 *.tmp
 *.swp
 *.swo
+
+# Build artifacts
+**/target/
+**/dist/
+**/out/
