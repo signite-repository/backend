@@ -9,5 +9,5 @@ import org.springframework.cache.annotation.EnableCaching
 class JigglogBackendApplication
 
 fun main(args: Array<String>) {
-	runApplication<JigglogBackendApplication>(*args)
+    runApplication<JigglogBackendApplication>(*args)
 }

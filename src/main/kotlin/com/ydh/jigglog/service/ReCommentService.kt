@@ -9,30 +9,37 @@ import org.springframework.stereotype.Controller
 import reactor.core.publisher.Mono
 
 @Controller
-class ReCommentService (
-    @Autowired private val recommentRepository: ReCommentRepository
+class ReCommentService(
+    @Autowired private val recommentRepository: ReCommentRepository,
 ) {
     companion object {
         private val logger = LoggerFactory.getLogger(ReCommentService::class.java)
     }
+
     // 대댓글 생성
-    fun createReComment(commentForm: ReCommentFormDTO, userId: Int, commentId: Int): Mono<ReComment> {
+    fun createReComment(
+        commentForm: ReCommentFormDTO,
+        userId: Int,
+        commentId: Int,
+    ): Mono<ReComment> {
         return recommentRepository.save(
             ReComment(
                 content = commentForm.content,
                 userId = userId,
-                commentId = commentId
-            )
+                commentId = commentId,
+            ),
         )
     }
+
     // 코멘트 삭제
     fun deleteReComment(recommentId: Int): Mono<Boolean> {
         return recommentRepository.deleteById(recommentId).thenReturn(true)
     }
+
     // 단일 대댓글 가져오기
     fun getReComment(recommentId: Int): Mono<ReComment> {
         return recommentRepository.existsById(recommentId)
-            .flatMap {  isExist ->
+            .flatMap { isExist ->
                 if (isExist) {
                     recommentRepository.findById(recommentId)
                 } else {

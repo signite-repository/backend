@@ -13,4 +13,3 @@ class Category(
     @Column("thumbnail")
     var thumbnail: String? = "",
 )
-

@@ -1,6 +1,5 @@
 package com.ydh.jigglog.service
 
-import com.ydh.jigglog.domain.dto.UserFormDTO
 import com.ydh.jigglog.domain.entity.User
 import com.ydh.jigglog.repository.UserRepository
 import org.junit.jupiter.api.BeforeEach
@@ -13,11 +12,9 @@ import org.springframework.http.server.reactive.ServerHttpRequest
 import org.springframework.web.reactive.function.server.ServerRequest
 import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
-import java.time.LocalDateTime
 
 @ExtendWith(MockitoExtension::class)
 class SecurityServiceTest {
-
     @Mock
     private lateinit var userRepository: UserRepository
 
@@ -33,21 +30,23 @@ class SecurityServiceTest {
 
     @BeforeEach
     fun setUp() {
-        securityService = SecurityService(
-            "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLW9ubHk=",
-            userRepository
-        )
+        securityService =
+            SecurityService(
+                "dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLXB1cnBvc2VzLW9ubHk=",
+                userRepository,
+            )
         securityService.owner = "admin"
 
-        testUser = User(
-            id = 1,
-            username = "testuser",
-            email = "test@example.com",
-            hashedPassword = "hashedPassword123",
-            imageUrl = "profile.jpg",
-            githubUrl = "",
-            summary = "테스트 사용자"
-        )
+        testUser =
+            User(
+                id = 1,
+                username = "testuser",
+                email = "test@example.com",
+                hashedPassword = "hashedPassword123",
+                imageUrl = "profile.jpg",
+                githubUrl = "",
+                summary = "테스트 사용자",
+            )
     }
 
     @Test
@@ -66,7 +65,7 @@ class SecurityServiceTest {
         val token = securityService.generateToken(testUser).block()
         val headers = mock<ServerRequest.Headers>()
         val httpHeaders = mock<org.springframework.http.HttpHeaders>()
-        
+
         whenever(headers.asHttpHeaders()).thenReturn(httpHeaders)
         whenever(httpHeaders.getFirst("Authorization")).thenReturn("Bearer $token")
 
@@ -81,7 +80,7 @@ class SecurityServiceTest {
     fun `잘못된 토큰 검증시 예외가 발생한다`() {
         val headers = mock<ServerRequest.Headers>()
         val httpHeaders = mock<org.springframework.http.HttpHeaders>()
-        
+
         whenever(headers.asHttpHeaders()).thenReturn(httpHeaders)
         whenever(httpHeaders.getFirst("Authorization")).thenReturn("Bearer invalid-token")
 
@@ -97,7 +96,7 @@ class SecurityServiceTest {
     fun `Bearer 토큰 형식을 검증할 수 있다`() {
         val headers = mock<ServerRequest.Headers>()
         val httpHeaders = mock<org.springframework.http.HttpHeaders>()
-        
+
         whenever(headers.asHttpHeaders()).thenReturn(httpHeaders)
         whenever(httpHeaders.getFirst("Authorization")).thenReturn("Bearer valid-token")
 
@@ -112,7 +111,7 @@ class SecurityServiceTest {
     fun `잘못된 토큰 형식 검증시 예외가 발생한다`() {
         val headers = mock<ServerRequest.Headers>()
         val httpHeaders = mock<org.springframework.http.HttpHeaders>()
-        
+
         whenever(headers.asHttpHeaders()).thenReturn(httpHeaders)
         whenever(httpHeaders.getFirst("Authorization")).thenReturn("Invalid token-format")
 
@@ -128,7 +127,7 @@ class SecurityServiceTest {
         val token = securityService.generateToken(testUser).block()
         val headers = mock<ServerRequest.Headers>()
         val httpHeaders = mock<org.springframework.http.HttpHeaders>()
-        
+
         whenever(serverRequest.headers()).thenReturn(headers)
         whenever(headers.asHttpHeaders()).thenReturn(httpHeaders)
         whenever(httpHeaders.getFirst("Authorization")).thenReturn("Bearer $token")
@@ -139,8 +138,8 @@ class SecurityServiceTest {
         StepVerifier.create(result)
             .expectNextMatches { user ->
                 user.id == 1 &&
-                user.username == "testuser" &&
-                user.hashedPassword == ""
+                    user.username == "testuser" &&
+                    user.hashedPassword == ""
             }
             .verifyComplete()
 
@@ -151,7 +150,7 @@ class SecurityServiceTest {
     fun `Authorization 헤더가 없으면 예외가 발생한다`() {
         val headers = mock<ServerRequest.Headers>()
         val httpHeaders = mock<org.springframework.http.HttpHeaders>()
-        
+
         whenever(serverRequest.headers()).thenReturn(headers)
         whenever(headers.asHttpHeaders()).thenReturn(httpHeaders)
         whenever(httpHeaders.getFirst("Authorization")).thenReturn(null)
@@ -167,15 +166,16 @@ class SecurityServiceTest {
     @Test
     fun `관리자 권한을 확인할 수 있다`() {
         securityService.owner = "testuser"
-        val ownerUser = User(
-            id = 1,
-            username = "testuser",
-            email = "owner@example.com",
-            hashedPassword = "hashedPassword",
-            imageUrl = "owner.jpg",
-            githubUrl = "",
-            summary = "소유자"
-        )
+        val ownerUser =
+            User(
+                id = 1,
+                username = "testuser",
+                email = "owner@example.com",
+                hashedPassword = "hashedPassword",
+                imageUrl = "owner.jpg",
+                githubUrl = "",
+                summary = "소유자",
+            )
 
         val result = securityService.isOwner(ownerUser)
 
@@ -187,15 +187,16 @@ class SecurityServiceTest {
     @Test
     fun `관리자가 아닌 사용자의 권한 확인시 예외가 발생한다`() {
         securityService.owner = "admin"
-        val nonOwnerUser = User(
-            id = 2,
-            username = "normaluser",
-            email = "normal@example.com",
-            hashedPassword = "hashedPassword",
-            imageUrl = "normal.jpg",
-            githubUrl = "",
-            summary = "일반 사용자"
-        )
+        val nonOwnerUser =
+            User(
+                id = 2,
+                username = "normaluser",
+                email = "normal@example.com",
+                hashedPassword = "hashedPassword",
+                imageUrl = "normal.jpg",
+                githubUrl = "",
+                summary = "일반 사용자",
+            )
 
         val result = securityService.isOwner(nonOwnerUser)
 

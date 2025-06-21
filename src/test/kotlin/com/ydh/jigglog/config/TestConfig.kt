@@ -5,24 +5,23 @@ import com.ydh.jigglog.domain.entity.Post
 import com.ydh.jigglog.domain.entity.Tag
 import com.ydh.jigglog.domain.entity.User
 import com.ydh.jigglog.repository.*
-import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Profile
+import org.mockito.Mockito
 import org.springframework.cache.CacheManager
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
+import org.springframework.context.annotation.Profile
 import org.springframework.data.redis.core.ReactiveRedisTemplate
-import org.mockito.Mockito
-import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.web.server.SecurityWebFilterChain
+import org.springframework.web.reactive.function.client.WebClient
 
 @Configuration
 @Profile("test")
 @EnableWebFluxSecurity
 class TestConfig {
-
     @Bean
     @Primary
     fun webClient(): WebClient {

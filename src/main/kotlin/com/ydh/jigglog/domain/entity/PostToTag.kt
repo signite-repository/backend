@@ -13,4 +13,3 @@ class PostToTag(
     @Column("tagId")
     var tagId: Int = 0,
 )
-

@@ -1,11 +1,11 @@
 package com.ydh.jigglog.domain.dto
 
-class UserDTO (
+class UserDTO(
     var id: Int? = 0,
-    var username: String?  = "",
+    var username: String? = "",
     var hashedPassword: String? = "",
     var email: String? = "",
     var imageUrl: String? = "",
     var githubUrl: String? = "",
-    var summary: String? = ""
+    var summary: String? = "",
 )

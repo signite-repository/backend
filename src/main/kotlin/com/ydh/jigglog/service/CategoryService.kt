@@ -16,49 +16,54 @@ import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 
 @Controller
-class CategoryService (
+class CategoryService(
     @Autowired private val categoryRepository: CategoryRepository,
     @Autowired private val categoryCacheRepository: CategoryCacheRepository,
-    @Autowired private val postRepository: PostRepository
-
+    @Autowired private val postRepository: PostRepository,
 ) {
     companion object {
         private val logger = LoggerFactory.getLogger(CategoryService::class.java)
     }
+
     // 카테고리 모두 가져오기
     fun getCategoryAll(): Flux<CategoryDTO> {
         return categoryRepository.findAllAndCount()
     }
 
     // 카테고리 아이디로 포스트 가져오기
-    fun getAllPostByCategoryId(categoryId: Int, offset: Int, limit: Int? = 8): Mono<List<PostInCategoryDTO>> {
-        return  Mono.just(categoryId).flatMap { categoryId ->
+    fun getAllPostByCategoryId(
+        categoryId: Int,
+        offset: Int,
+        limit: Int? = 8,
+    ): Mono<List<PostInCategoryDTO>> {
+        return Mono.just(categoryId).flatMap { categoryId ->
             postRepository.findAllByCategoryId(categoryId, offset, limit).collectList().toMono()
-        }.flatMap{
+        }.flatMap {
             var posts = mutableListOf<PostInCategoryDTO>()
             for (post in it) {
-                var result = PostInCategoryDTO(
-                    id = post.id,
-                    summary = post.summary,
-                    title = post.title,
-                    createdAt = post.createdat,
-                    postcount = post.postcount,
-                    viewcount = post.viewcount,
-                    commentcount = post.commentcount,
-                    last = post.last,
-                    images = post.images,
-                    user = UserInPostCategoryDTO(
-                        id = post.userid,
-                        username = post.username,
-                        imageUrl = post.imageurl,
+                var result =
+                    PostInCategoryDTO(
+                        id = post.id,
+                        summary = post.summary,
+                        title = post.title,
+                        createdAt = post.createdat,
+                        postcount = post.postcount,
+                        viewcount = post.viewcount,
+                        commentcount = post.commentcount,
+                        last = post.last,
+                        images = post.images,
+                        user =
+                            UserInPostCategoryDTO(
+                                id = post.userid,
+                                username = post.username,
+                                imageUrl = post.imageurl,
+                            ),
                     )
-                )
                 posts.add(result)
             }
             posts.toMono()
         }
     }
-
 
     // 카테고리 확인하고 없으면 생성
     fun createCategoryIfNot(title: String): Mono<Category> {
@@ -80,21 +85,19 @@ class CategoryService (
                     .collectList()
                     .flatMap {
                         categoryCacheRepository.setCategoriesAllAndCaching(it)
-                    }
-        ).flatMap {
-            it.categories.toMono()
-        }
+                    },
+            ).flatMap {
+                it.categories.toMono()
+            }
     }
-
 
     // 카테고리 캐시 리셋
     fun resetCategoryCash(): Mono<CategoryListDTO> {
-            return categoryRepository
-                .findAllAndCount()
-                .collectList()
-                .flatMap {
-                    categoryCacheRepository.setCategoriesAllAndCaching(it)
-                }
-
+        return categoryRepository
+            .findAllAndCount()
+            .collectList()
+            .flatMap {
+                categoryCacheRepository.setCategoriesAllAndCaching(it)
+            }
     }
 }

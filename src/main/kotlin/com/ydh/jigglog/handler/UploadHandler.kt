@@ -9,8 +9,9 @@ import org.springframework.web.reactive.function.server.ServerResponse
 import reactor.core.publisher.Mono
 
 @Component
-class UploadHandler(@Autowired private val uploadService: UploadService) {
-
+class UploadHandler(
+    @Autowired private val uploadService: UploadService,
+) {
     fun uploadFile(request: ServerRequest): Mono<ServerResponse> {
         return request.multipartData()
             .flatMap { parts ->
@@ -46,7 +47,3 @@ class UploadHandler(@Autowired private val uploadService: UploadService) {
             }
     }
 }
-
-
-
-

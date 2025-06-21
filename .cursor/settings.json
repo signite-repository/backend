@@ -1,0 +1,42 @@
+{
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.server.launchMode": "Standard",
+    "java.import.gradle.enabled": true,
+    "java.import.gradle.wrapper.enabled": true,
+    "java.import.gradle.offline.enabled": false,
+    "java.gradle.buildServer.enabled": "on",
+    "kotlin.languageServer.enabled": true,
+    "kotlin.compiler.jvm.target": "17",
+    "files.encoding": "utf8",
+    "files.autoGuessEncoding": true,
+    "terminal.integrated.env.windows": {
+        "JAVA_TOOL_OPTIONS": "-Dfile.encoding=UTF-8"
+    },
+    "spring-boot.ls.java.vmargs": [
+        "-Dfile.encoding=UTF-8",
+        "-Duser.country=KR",
+        "-Duser.language=ko"
+    ],
+    "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx2G -Xms100m -Dfile.encoding=UTF-8",
+    "files.associations": {
+        "*.kt": "kotlin",
+        "*.kts": "kotlin"
+    },
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
+    },
+    "[kotlin]": {
+        "editor.defaultFormatter": "fwcd.kotlin",
+        "editor.formatOnSave": true,
+        "editor.tabSize": 4,
+        "editor.insertSpaces": false
+    },
+    "[java]": {
+        "editor.defaultFormatter": "redhat.java",
+        "editor.formatOnSave": true
+    },
+    "gradle.nestedProjects": true,
+    "gradle.focusTaskInExplorer": true
+} 

@@ -8,13 +8,14 @@ import org.springframework.test.context.TestPropertySource
 
 @SpringBootTest
 @Import(TestConfig::class)
-@TestPropertySource(properties = [
-    "spring.r2dbc.url=r2dbc:h2:mem:///testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
-    "spring.r2dbc.username=sa",
-    "spring.r2dbc.password="
-])
+@TestPropertySource(
+    properties = [
+        "spring.r2dbc.url=r2dbc:h2:mem:///testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+        "spring.r2dbc.username=sa",
+        "spring.r2dbc.password=",
+    ],
+)
 class SimpleTest {
-
     @Test
     fun `애플리케이션 컨텍스트가 정상적으로 로드된다`() {
         println("테스트가 성공적으로 실행되었습니다!")

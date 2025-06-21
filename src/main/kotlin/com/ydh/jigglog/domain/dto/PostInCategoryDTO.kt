@@ -1,12 +1,8 @@
 package com.ydh.jigglog.domain.dto
 
-import com.ydh.jigglog.domain.entity.Category
-import com.ydh.jigglog.domain.entity.Comment
-import com.ydh.jigglog.domain.entity.Tag
-import com.ydh.jigglog.domain.entity.User
 import java.time.LocalDateTime
 
-class PostInCategoryDTO (
+class PostInCategoryDTO(
     var id: Int = 0,
     var title: String? = "",
     var summary: String? = "",

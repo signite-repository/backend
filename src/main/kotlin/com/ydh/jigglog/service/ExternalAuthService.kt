@@ -3,7 +3,6 @@ package com.ydh.jigglog.service
 import com.ydh.jigglog.domain.dto.UserDTO
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.bodyToMono
@@ -13,21 +12,21 @@ import java.time.Duration
 @Service
 class ExternalAuthService(
     private val webClient: WebClient,
-    @Value("\${auth.service.url:http://localhost:8081}") 
-    private val authServiceUrl: String
+    @Value("\${auth.service.url:http://localhost:8081}")
+    private val authServiceUrl: String,
 ) {
-    
     companion object {
         private val logger = LoggerFactory.getLogger(ExternalAuthService::class.java)
     }
 
     data class TokenValidationRequest(val token: String)
+
     data class TokenValidationResponse(
         val valid: Boolean,
         val user: UserInfo? = null,
-        val error: String? = null
+        val error: String? = null,
     )
-    
+
     data class UserInfo(
         val id: Long,
         val username: String,
@@ -35,12 +34,12 @@ class ExternalAuthService(
         val imageUrl: String? = null,
         val githubUrl: String? = null,
         val summary: String? = null,
-        val spiffeId: String? = null
+        val spiffeId: String? = null,
     )
 
     fun validateToken(token: String): Mono<TokenValidationResponse> {
         val cleanToken = token.removePrefix("Bearer ")
-        
+
         return webClient
             .post()
             .uri("$authServiceUrl/api/auth/validate")
@@ -58,9 +57,9 @@ class ExternalAuthService(
             .timeout(Duration.ofSeconds(5))
             .onErrorReturn(
                 TokenValidationResponse(
-                    valid = false, 
-                    error = "Auth service timeout or error"
-                )
+                    valid = false,
+                    error = "Auth service timeout or error",
+                ),
             )
             .doOnNext { response ->
                 if (response.valid) {
@@ -73,7 +72,7 @@ class ExternalAuthService(
 
     fun getCurrentUser(token: String): Mono<UserDTO> {
         val cleanToken = token.removePrefix("Bearer ")
-        
+
         return webClient
             .get()
             .uri("$authServiceUrl/api/auth/me")
@@ -91,7 +90,7 @@ class ExternalAuthService(
                     email = userInfo.email,
                     imageUrl = userInfo.imageUrl,
                     githubUrl = userInfo.githubUrl,
-                    summary = userInfo.summary
+                    summary = userInfo.summary,
                 )
             }
             .timeout(Duration.ofSeconds(5))

@@ -9,15 +9,15 @@ import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 
 @Controller
-class PortfolioService (
+class PortfolioService(
     @Autowired private val portfolioRepository: PortfolioRepository,
     @Autowired private val iconSetRepository: IconSetRepository,
-    @Autowired private val imageUrlRepository: ImageUrlRepository
-
+    @Autowired private val imageUrlRepository: ImageUrlRepository,
 ) {
     companion object {
         private val logger = LoggerFactory.getLogger(PortfolioService::class.java)
     }
+
     // 포트폴리오 모두 가져오기
     fun getPortfolioAll(): Mono<List<PortfolioDTO>> {
         return Mono.just("portfolio")
@@ -28,24 +28,25 @@ class PortfolioService (
                 val portfolio_map = mutableMapOf<Int, PortfolioDTO>()
                 for (portfolio in it) {
                     portfolio_idx.add(portfolio.id!!)
-                    portfolio_map[portfolio.id!!] = PortfolioDTO(
-                        id = portfolio.id,
-                        title = portfolio.title,
-                        summary = portfolio.summary,
-                        content = portfolio.content,
-                        images = portfolio.images,
-                        viewcount = portfolio.viewcount,
-                        site = portfolio.site,
-                        createdAt = portfolio.createdAt,
-                        updatedAt = portfolio.updatedAt,
-                        iconsets = mutableListOf(),
-                        imageurls = mutableListOf(),
-                    )
+                    portfolio_map[portfolio.id!!] =
+                        PortfolioDTO(
+                            id = portfolio.id,
+                            title = portfolio.title,
+                            summary = portfolio.summary,
+                            content = portfolio.content,
+                            images = portfolio.images,
+                            viewcount = portfolio.viewcount,
+                            site = portfolio.site,
+                            createdAt = portfolio.createdAt,
+                            updatedAt = portfolio.updatedAt,
+                            iconsets = mutableListOf(),
+                            imageurls = mutableListOf(),
+                        )
                 }
                 Mono.zip(
                     iconSetRepository.findAllByPostIdIn(portfolio_idx).collectList().toMono(),
                     imageUrlRepository.findAllByPostIdIn(portfolio_idx).collectList().toMono(),
-                    portfolio_map.toMono()
+                    portfolio_map.toMono(),
                 )
             }.flatMap {
                 val iconSets = it.t1
@@ -64,45 +65,44 @@ class PortfolioService (
                 results.toMono()
             }
     }
+
     // 포트폴리오 (유저, 아이콘셋) 가져오기
     fun getPortfolio(portfolioId: Int): Mono<PortfolioDTO?> {
         return Mono.just(portfolioId)
-        .flatMap {
-            portfolioRepository.existsById(it)
-        }.flatMap { isExist ->
-            if (!isExist) {
-                throw error("포트폴리오가 없습니다")
-            } else {
-                portfolioRepository.findById(portfolioId)
-                    .flatMap { portfolio ->
-                        Mono.zip(
-                            portfolio.toMono(),
-                            // tag
-                            iconSetRepository.findByPostId(portfolioId).collectList().toMono(),
-                            // category
-                            imageUrlRepository.findByPostId(portfolioId).collectList().toMono(),
-                        )
-                    }.flatMap {
-                        val portfolio = it.t1
-                        val iconSets = it.t2
-                        val imageUrls = it.t3
-                        PortfolioDTO(
-                            id = portfolio.id,
-                            title = portfolio.title,
-                            summary = portfolio.summary,
-                            content = portfolio.content,
-                            images = portfolio.images,
-                            viewcount = portfolio.viewcount,
-                            site = portfolio.site,
-                            createdAt = portfolio.createdAt,
-                            updatedAt = portfolio.updatedAt,
-                            imageurls = imageUrls,
-                            iconsets = iconSets
-                        ).toMono()
-                    }
+            .flatMap {
+                portfolioRepository.existsById(it)
+            }.flatMap { isExist ->
+                if (!isExist) {
+                    throw error("포트폴리오가 없습니다")
+                } else {
+                    portfolioRepository.findById(portfolioId)
+                        .flatMap { portfolio ->
+                            Mono.zip(
+                                portfolio.toMono(),
+                                // tag
+                                iconSetRepository.findByPostId(portfolioId).collectList().toMono(),
+                                // category
+                                imageUrlRepository.findByPostId(portfolioId).collectList().toMono(),
+                            )
+                        }.flatMap {
+                            val portfolio = it.t1
+                            val iconSets = it.t2
+                            val imageUrls = it.t3
+                            PortfolioDTO(
+                                id = portfolio.id,
+                                title = portfolio.title,
+                                summary = portfolio.summary,
+                                content = portfolio.content,
+                                images = portfolio.images,
+                                viewcount = portfolio.viewcount,
+                                site = portfolio.site,
+                                createdAt = portfolio.createdAt,
+                                updatedAt = portfolio.updatedAt,
+                                imageurls = imageUrls,
+                                iconsets = iconSets,
+                            ).toMono()
+                        }
+                }
             }
-        }
     }
-
 }
-

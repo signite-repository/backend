@@ -1,9 +1,14 @@
 package com.ydh.jigglog.domain.dto
 
-import com.ydh.jigglog.domain.entity.*
+import com.ydh.jigglog.domain.entity.Category
+import com.ydh.jigglog.domain.entity.Comment
+import com.ydh.jigglog.domain.entity.IconSet
+import com.ydh.jigglog.domain.entity.ImageUrl
+import com.ydh.jigglog.domain.entity.Tag
+import com.ydh.jigglog.domain.entity.User
 import java.time.LocalDateTime
 
-class PortfolioDTO (
+class PortfolioDTO(
     var id: Int = 0,
     var title: String? = "",
     var summary: String? = "",
@@ -18,5 +23,5 @@ class PortfolioDTO (
     var tags: List<Tag>? = null,
     var comments: List<Comment>? = null,
     var iconsets: MutableList<IconSet>? = mutableListOf(),
-    var imageurls: MutableList<ImageUrl>? = mutableListOf()
+    var imageurls: MutableList<ImageUrl>? = mutableListOf(),
 )

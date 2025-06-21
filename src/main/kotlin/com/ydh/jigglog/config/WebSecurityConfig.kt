@@ -17,7 +17,6 @@ import reactor.core.publisher.Mono
 @EnableWebFluxSecurity
 @EnableReactiveMethodSecurity
 class WebSecurityConfig {
-
     companion object {
         private val logger = LoggerFactory.getLogger(WebSecurityConfig::class.java)
     }
@@ -38,10 +37,12 @@ class WebSecurityConfig {
             .exceptionHandling()
             .authenticationEntryPoint { swe, e ->
                 logger.error(e.message)
-                Mono.fromRunnable { swe.response.statusCode = HttpStatus.UNAUTHORIZED } }
+                Mono.fromRunnable { swe.response.statusCode = HttpStatus.UNAUTHORIZED }
+            }
             .accessDeniedHandler { swe, e ->
                 logger.error(e.message)
-                Mono.fromRunnable { swe.response.statusCode = HttpStatus.FORBIDDEN } }
+                Mono.fromRunnable { swe.response.statusCode = HttpStatus.FORBIDDEN }
+            }
             .and()
             .requestCache().requestCache(NoOpServerRequestCache.getInstance()).and()
             .csrf().disable()

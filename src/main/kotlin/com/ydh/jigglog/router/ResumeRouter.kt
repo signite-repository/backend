@@ -7,12 +7,11 @@ import org.springframework.web.reactive.function.server.router
 
 @Component
 class ResumeRouter(private val handler: ResumeHandler) {
-
     @Bean
-    fun resumeRouterFunction() = router {
-        "/api/resume".nest {
-            GET("", handler::get)
+    fun resumeRouterFunction() =
+        router {
+            "/api/resume".nest {
+                GET("", handler::get)
+            }
         }
-    }
-
 }

@@ -14,7 +14,6 @@ import reactor.test.StepVerifier
 
 @ExtendWith(MockitoExtension::class)
 class ValidationServiceTest {
-
     @Mock
     private lateinit var userRepository: UserRepository
 
@@ -29,44 +28,49 @@ class ValidationServiceTest {
     fun setUp() {
         validationService = ValidationService(userRepository)
 
-        validPostForm = PostFormDTO().apply {
-            title = "유효한 게시글 제목"
-            summary = "유효한 요약"
-            content = "유효한 내용입니다."
-            images = "valid-image.jpg"
-            category_title = "유효한 카테고리"
-            tags = "Kotlin,Spring,Test"
-        }
+        validPostForm =
+            PostFormDTO().apply {
+                title = "유효한 게시글 제목"
+                summary = "유효한 요약"
+                content = "유효한 내용입니다."
+                images = "valid-image.jpg"
+                category_title = "유효한 카테고리"
+                tags = "Kotlin,Spring,Test"
+            }
 
-        invalidPostForm = PostFormDTO().apply {
-            title = ""
-            summary = ""
-            content = ""
-            images = ""
-            category_title = ""
-            tags = ""
-        }
+        invalidPostForm =
+            PostFormDTO().apply {
+                title = ""
+                summary = ""
+                content = ""
+                images = ""
+                category_title = ""
+                tags = ""
+            }
 
-        validUserForm = UserFormDTO().apply {
-            username = "validuser"
-            password = "validpassword123"
-        }
+        validUserForm =
+            UserFormDTO().apply {
+                username = "validuser"
+                password = "validpassword123"
+            }
 
-        invalidUserForm = UserFormDTO().apply {
-            username = ""
-            password = "123"
-        }
+        invalidUserForm =
+            UserFormDTO().apply {
+                username = ""
+                password = "123"
+            }
     }
 
     @Test
     fun `유효한 게시글 폼 데이터는 검증을 통과한다`() {
-        val validationFields: Map<String?, String?> = mapOf(
-            "포스트 제목" to validPostForm.title,
-            "포스트 요약" to validPostForm.summary,
-            "포스트 내용" to validPostForm.content,
-            "타이틀 이미지" to validPostForm.images,
-            "카테고리 제목" to validPostForm.category_title
-        )
+        val validationFields: Map<String?, String?> =
+            mapOf(
+                "포스트 제목" to validPostForm.title,
+                "포스트 요약" to validPostForm.summary,
+                "포스트 내용" to validPostForm.content,
+                "타이틀 이미지" to validPostForm.images,
+                "카테고리 제목" to validPostForm.category_title,
+            )
 
         val result = validationService.checkValidForm(validPostForm, validationFields)
 
@@ -77,13 +81,14 @@ class ValidationServiceTest {
 
     @Test
     fun `빈 제목을 가진 게시글 폼은 검증에 실패한다`() {
-        val validationFields: Map<String?, String?> = mapOf(
-            "포스트 제목" to invalidPostForm.title,
-            "포스트 요약" to invalidPostForm.summary,
-            "포스트 내용" to invalidPostForm.content,
-            "타이틀 이미지" to invalidPostForm.images,
-            "카테고리 제목" to invalidPostForm.category_title
-        )
+        val validationFields: Map<String?, String?> =
+            mapOf(
+                "포스트 제목" to invalidPostForm.title,
+                "포스트 요약" to invalidPostForm.summary,
+                "포스트 내용" to invalidPostForm.content,
+                "타이틀 이미지" to invalidPostForm.images,
+                "카테고리 제목" to invalidPostForm.category_title,
+            )
 
         try {
             validationService.checkValidForm(invalidPostForm, validationFields).block()
@@ -95,10 +100,11 @@ class ValidationServiceTest {
 
     @Test
     fun `유효한 사용자 폼 데이터는 검증을 통과한다`() {
-        val userValidationFields: Map<String?, String?> = mapOf(
-            "사용자명" to validUserForm.username,
-            "비밀번호" to validUserForm.password
-        )
+        val userValidationFields: Map<String?, String?> =
+            mapOf(
+                "사용자명" to validUserForm.username,
+                "비밀번호" to validUserForm.password,
+            )
 
         val result = validationService.checkValidForm(validUserForm, userValidationFields)
 
@@ -109,10 +115,11 @@ class ValidationServiceTest {
 
     @Test
     fun `빈 사용자명은 검증에 실패한다`() {
-        val userValidationFields: Map<String?, String?> = mapOf(
-            "사용자명" to invalidUserForm.username,
-            "비밀번호" to invalidUserForm.password
-        )
+        val userValidationFields: Map<String?, String?> =
+            mapOf(
+                "사용자명" to invalidUserForm.username,
+                "비밀번호" to invalidUserForm.password,
+            )
 
         try {
             validationService.checkValidForm(invalidUserForm, userValidationFields).block()
@@ -152,10 +159,11 @@ class ValidationServiceTest {
     fun `존재하지 않는 사용자명은 검증에 실패한다`() {
         whenever(userRepository.existsByUsername("nonexistent")).thenReturn(Mono.just(false))
 
-        val nonExistentUserForm = UserFormDTO().apply {
-            username = "nonexistent"
-            password = "password123"
-        }
+        val nonExistentUserForm =
+            UserFormDTO().apply {
+                username = "nonexistent"
+                password = "password123"
+            }
 
         val result = validationService.checkNotValidUsername(nonExistentUserForm)
 
@@ -170,10 +178,11 @@ class ValidationServiceTest {
     fun `존재하는 사용자명 확인이 성공한다`() {
         whenever(userRepository.existsByUsername("existinguser")).thenReturn(Mono.just(true))
 
-        val existingUserForm = UserFormDTO().apply {
-            username = "existinguser"
-            password = "password123"
-        }
+        val existingUserForm =
+            UserFormDTO().apply {
+                username = "existinguser"
+                password = "password123"
+            }
 
         val result = validationService.checkNotValidUsername(existingUserForm)
 
@@ -188,10 +197,11 @@ class ValidationServiceTest {
     fun `사용자명 존재 여부를 불린값으로 확인할 수 있다`() {
         whenever(userRepository.existsByUsername("testuser")).thenReturn(Mono.just(true))
 
-        val testUserForm = UserFormDTO().apply {
-            username = "testuser"
-            password = "password123"
-        }
+        val testUserForm =
+            UserFormDTO().apply {
+                username = "testuser"
+                password = "password123"
+            }
 
         val result = validationService.checkUsernameBoolean(testUserForm)
 
@@ -206,10 +216,11 @@ class ValidationServiceTest {
     fun `존재하지 않는 사용자명에 대해 false를 반환한다`() {
         whenever(userRepository.existsByUsername("nonexistentuser")).thenReturn(Mono.just(false))
 
-        val nonExistentUserForm = UserFormDTO().apply {
-            username = "nonexistentuser"
-            password = "password123"
-        }
+        val nonExistentUserForm =
+            UserFormDTO().apply {
+                username = "nonexistentuser"
+                password = "password123"
+            }
 
         val result = validationService.checkUsernameBoolean(nonExistentUserForm)
 

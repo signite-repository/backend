@@ -3,7 +3,6 @@ package com.ydh.jigglog.service
 import com.ydh.jigglog.domain.entity.User
 import com.ydh.jigglog.repository.UserRepository
 import io.jsonwebtoken.*
-import io.jsonwebtoken.security.Keys
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -17,28 +16,32 @@ import javax.crypto.spec.SecretKeySpec
 class SecurityService(
     @param:Value("\${jwt.secret}") private val jwt_secret: String,
     @Autowired private val userRepository: UserRepository,
-    ) {
+) {
     // JWT_SECRET
     private val JWT_SECRET = jwt_secret
+
     // 토큰 유효시간
     private val JWT_EXPIRATION_MS = 604800000
     private val secretKey = SecretKeySpec(JWT_SECRET.toByteArray(), SignatureAlgorithm.HS256.jcaName)
 
     @Value("\${spring.datasource.owner}")
     lateinit var owner: String
+
     // jwt 토큰 생성
     fun generateToken(user: User): Mono<String> {
         val now = Date()
         val expiryDate = Date(now.getTime() + JWT_EXPIRATION_MS)
-        val build = Jwts.builder()
-            // jwt 토큰 인자값
-            .setSubject(user.username)  // 사용자 이름
-            .setIssuedAt(Date()) // 현재 시간 기반으로 생성
-            .setExpiration(expiryDate) // 만료 시간 세팅
-            .signWith(secretKey, SignatureAlgorithm.HS256)
-            .compact()
+        val build =
+            Jwts.builder()
+                // jwt 토큰 인자값
+                .setSubject(user.username) // 사용자 이름
+                .setIssuedAt(Date()) // 현재 시간 기반으로 생성
+                .setExpiration(expiryDate) // 만료 시간 세팅
+                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .compact()
         return Mono.just(build)
     }
+
     // jwt 토큰 파싱
     fun parseJwtToken(token: String?): Claims {
         return Jwts.parser()
@@ -46,6 +49,7 @@ class SecurityService(
             .parseClaimsJws(token)
             .body
     }
+
     // 토큰의 유효성 + 만료일자 확인
     fun checkValidToken(header: ServerRequest.Headers): Mono<Boolean> {
         return try {
@@ -56,8 +60,9 @@ class SecurityService(
             throw Exception("올바른 토큰이 아닙니다.")
         }
     }
+
     // 토큰의 받는 형식(Bearer) 검사
-   fun checkValidHeader(mono: ServerRequest.Headers): Mono<String?> {
+    fun checkValidHeader(mono: ServerRequest.Headers): Mono<String?> {
         return Mono.just(mono).flatMap {
             val tokens = it.asHttpHeaders().getFirst("Authorization")?.split(" ")
             if (tokens?.get(0).equals("Bearer")) {
@@ -67,6 +72,7 @@ class SecurityService(
             }
         }
     }
+
     // 로그인 여부 확인 후 유저 가져오기
     fun getLoggedInUser(req: ServerRequest): Mono<User> {
         return try {
@@ -81,6 +87,7 @@ class SecurityService(
             throw Exception("로그인이 필요한 서비스입니다.")
         }
     }
+
     // 관리자 체크
     fun isOwner(user: User): Mono<Boolean> {
         return Mono.just(user).flatMap {
@@ -91,8 +98,12 @@ class SecurityService(
             }
         }
     }
+
     // 객체 유저 체크
-   fun checkIsOwner(userId: Int, writer: Int): Mono<Boolean> {
+    fun checkIsOwner(
+        userId: Int,
+        writer: Int,
+    ): Mono<Boolean> {
         return writer.toMono().flatMap {
             if (it == userId) {
                 true.toMono()

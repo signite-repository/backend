@@ -8,12 +8,12 @@ import org.springframework.web.reactive.function.server.router
 @Component
 class CategoryRouter(private val handler: CategoryHandler) {
     @Bean
-    fun categoryRouterFunction() = router {
-        "/api/category".nest {
-            GET("", handler::getAll)
-            GET("/cache", handler::getAllAndCache)
-            GET("/{categoryId}", handler::getAllPostByCategoryId)
+    fun categoryRouterFunction() =
+        router {
+            "/api/category".nest {
+                GET("", handler::getAll)
+                GET("/cache", handler::getAllAndCache)
+                GET("/{categoryId}", handler::getAllPostByCategoryId)
+            }
         }
-    }
-
 }

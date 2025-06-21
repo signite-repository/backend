@@ -1,6 +1,6 @@
 package com.ydh.jigglog.domain.dto
 
-class PostPathDTO (
+class PostPathDTO(
     var id: Int = 0,
     var title: String? = "",
 )

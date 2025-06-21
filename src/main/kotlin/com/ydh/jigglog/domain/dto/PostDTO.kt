@@ -6,7 +6,7 @@ import com.ydh.jigglog.domain.entity.Tag
 import com.ydh.jigglog.domain.entity.User
 import java.time.LocalDateTime
 
-class PostDTO (
+class PostDTO(
     var id: Int = 0,
     var title: String? = "",
     var summary: String? = "",

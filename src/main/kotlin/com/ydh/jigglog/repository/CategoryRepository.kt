@@ -9,12 +9,13 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 @Repository
-interface CategoryRepository: ReactiveCrudRepository<Category, Int> {
+interface CategoryRepository : ReactiveCrudRepository<Category, Int> {
     fun existsByTitle(title: String): Mono<Boolean>
+
     fun findByTitle(title: String): Mono<Category>
 
     @Query(
-    """SELECT categories.*
+        """SELECT categories.*
             FROM ( 
                 SELECT id, title, thumbnail, (
                     SELECT COUNT(id) 
@@ -24,10 +25,12 @@ interface CategoryRepository: ReactiveCrudRepository<Category, Int> {
                 FROM category 
                 WHERE id != 11 AND id != 1
             ) as categories
-        WHERE posts != 0; """)
+        WHERE posts != 0; """,
+    )
     fun findAllAndCount(): Flux<CategoryDTO>
 
-    @Query("""
+    @Query(
+        """
             SELECT
                 c.id,
                 c.title,
@@ -43,6 +46,7 @@ interface CategoryRepository: ReactiveCrudRepository<Category, Int> {
                 c.id, c.title, c.imageUrl
             HAVING
                 postCount != 0;
-    """)
+    """,
+    )
     fun findCountAll(): Flux<CategoryDTO>
 }

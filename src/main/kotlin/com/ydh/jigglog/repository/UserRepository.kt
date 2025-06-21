@@ -7,8 +7,10 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 @Repository
-interface UserRepository: ReactiveCrudRepository<User, Int> {
-    fun findByUsername(username: String) : Mono<User>
+interface UserRepository : ReactiveCrudRepository<User, Int> {
+    fun findByUsername(username: String): Mono<User>
+
     fun existsByUsername(username: String): Mono<Boolean>
+
     fun findAllByIdIn(ids: List<Int>): Flux<User>
 }

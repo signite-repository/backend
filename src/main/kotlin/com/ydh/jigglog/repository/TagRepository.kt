@@ -7,18 +7,18 @@ import org.springframework.stereotype.Repository
 import reactor.core.publisher.Flux
 
 @Repository
-interface TagRepository: ReactiveCrudRepository<Tag, Int> {
+interface TagRepository : ReactiveCrudRepository<Tag, Int> {
     fun findAllByTitleIn(title: List<String>): Flux<Tag>
 
     @Query(
         "SELECT distinct(post.tagId) as id, post.title " +
-        "FROM ( " +
-                "SELECT post_to_tag.id, post_to_tag.postId, post_to_tag.tagId, tag.title " +
-                "FROM tag " +
-                "LEFT OUTER JOIN post_to_tag " +
-                "ON post_to_tag.tagId = tag.id " +
+            "FROM ( " +
+            "SELECT post_to_tag.id, post_to_tag.postId, post_to_tag.tagId, tag.title " +
+            "FROM tag " +
+            "LEFT OUTER JOIN post_to_tag " +
+            "ON post_to_tag.tagId = tag.id " +
             ") post " +
-        "WHERE post.id is not null "
+            "WHERE post.id is not null ",
     )
     fun findTagsAllContainPost(): Flux<Tag>
 }

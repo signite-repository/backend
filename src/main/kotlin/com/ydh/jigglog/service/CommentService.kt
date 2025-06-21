@@ -12,33 +12,39 @@ import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 
 @Controller
-class CommentService (
+class CommentService(
     @Autowired private val commentRepository: CommentRepository,
     @Autowired private val recommentRepository: ReCommentRepository,
-    @Autowired private val userRepository: UserRepository
+    @Autowired private val userRepository: UserRepository,
 ) {
     companion object {
         private val logger = LoggerFactory.getLogger(CommentService::class.java)
     }
+
     // 코멘트 생성
-    fun createComment(commentForm: CommentFormDTO, userId: Int, postId: Int): Mono<Comment> {
+    fun createComment(
+        commentForm: CommentFormDTO,
+        userId: Int,
+        postId: Int,
+    ): Mono<Comment> {
         return commentRepository.save(
             Comment(
                 content = commentForm.content,
                 userId = userId,
-                postId = postId
-            )
+                postId = postId,
+            ),
         )
     }
+
     // 코멘트 삭제
     fun deleteComment(commentId: Int): Mono<Boolean> {
         return commentRepository.deleteById(commentId).thenReturn(true)
-
     }
+
     // 단일 코멘트 가져오기
     fun getComment(commentId: Int): Mono<Comment> {
         return commentRepository.existsById(commentId)
-            .flatMap {  isExist ->
+            .flatMap { isExist ->
                 if (isExist) {
                     commentRepository.findById(commentId)
                 } else {
@@ -54,37 +60,41 @@ class CommentService (
         }.flatMap {
             val comment_idx = mutableMapOf<Int, CommentDTO>()
             for (commentsAll in it) {
-                val recomment = ReCommentDTO(
-                    id = commentsAll.recomment_id,
-                    content = commentsAll.recomment_content,
-                    createdAt = commentsAll.recomment_createdat,
-                    user = UserDTO(
-                        id = commentsAll.recomment_userid,
-                        username = commentsAll.recomment_username,
-                        email = commentsAll.recomment_email,
-                        imageUrl = commentsAll.recomment_imageurl,
-                        githubUrl = commentsAll.recomment_githuburl,
-                        summary = commentsAll.recomment_summary,
+                val recomment =
+                    ReCommentDTO(
+                        id = commentsAll.recomment_id,
+                        content = commentsAll.recomment_content,
+                        createdAt = commentsAll.recomment_createdat,
+                        user =
+                            UserDTO(
+                                id = commentsAll.recomment_userid,
+                                username = commentsAll.recomment_username,
+                                email = commentsAll.recomment_email,
+                                imageUrl = commentsAll.recomment_imageurl,
+                                githubUrl = commentsAll.recomment_githuburl,
+                                summary = commentsAll.recomment_summary,
+                            ),
                     )
-                )
                 if (commentsAll.comment_id in comment_idx) {
                     comment_idx[commentsAll.comment_id]?.recomments?.add(recomment)
                 } else {
-                    val comment = CommentDTO(
-                        id = commentsAll.comment_id,
-                        content = commentsAll.comment_content,
-                        createdAt = commentsAll.comment_createdat,
-                        recomments = mutableListOf<ReCommentDTO>(),
-                        user = UserDTO(
-                            id = commentsAll.comment_userid,
-                            username = commentsAll.comment_username,
-                            hashedPassword = "",
-                            email = commentsAll.comment_email,
-                            imageUrl = commentsAll.comment_imageurl,
-                            githubUrl = commentsAll.comment_githuburl,
-                            summary = commentsAll.comment_summary,
+                    val comment =
+                        CommentDTO(
+                            id = commentsAll.comment_id,
+                            content = commentsAll.comment_content,
+                            createdAt = commentsAll.comment_createdat,
+                            recomments = mutableListOf<ReCommentDTO>(),
+                            user =
+                                UserDTO(
+                                    id = commentsAll.comment_userid,
+                                    username = commentsAll.comment_username,
+                                    hashedPassword = "",
+                                    email = commentsAll.comment_email,
+                                    imageUrl = commentsAll.comment_imageurl,
+                                    githubUrl = commentsAll.comment_githuburl,
+                                    summary = commentsAll.comment_summary,
+                                ),
                         )
-                    )
                     if (recomment.id != 0) comment.recomments.add(recomment)
                     comment_idx[commentsAll.comment_id] = comment
                 }
@@ -96,5 +106,4 @@ class CommentService (
             results.toMono()
         }
     }
-
 }

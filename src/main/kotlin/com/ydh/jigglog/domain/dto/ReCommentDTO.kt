@@ -2,7 +2,7 @@ package com.ydh.jigglog.domain.dto
 
 import java.time.LocalDateTime
 
-class ReCommentDTO (
+class ReCommentDTO(
     var id: Int = 0,
     var content: String? = "",
     var user: UserDTO? = null,

@@ -1,10 +1,10 @@
 package com.ydh.jigglog.handler
 
 import com.ydh.jigglog.config.TestConfig
-import com.ydh.jigglog.router.PostRouter
 import com.ydh.jigglog.domain.dto.PostFormDTO
 import com.ydh.jigglog.domain.dto.UpdateFormDTO
 import com.ydh.jigglog.domain.entity.*
+import com.ydh.jigglog.router.PostRouter
 import com.ydh.jigglog.service.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -22,7 +22,6 @@ import java.time.LocalDateTime
 @WebFluxTest
 @Import(PostHandler::class, PostRouter::class, TestConfig::class)
 class PostHandlerTest {
-
     @Autowired
     private lateinit var webTestClient: WebTestClient
 
@@ -51,32 +50,36 @@ class PostHandlerTest {
 
     @BeforeEach
     fun setUp() {
-        testUser = User(
-            id = 1,
-            username = "testuser",
-            email = "test@example.com",
-            hashedPassword = "",
-            imageUrl = "profile.jpg",
-            githubUrl = "",
-            summary = "테스트 사용자"
-        )
-        testCategory = Category(
-            id = 1,
-            title = "테스트 카테고리",
-            thumbnail = ""
-        )
-        testTags = listOf(
-            Tag(1, "Kotlin"),
-            Tag(2, "Spring")
-        )
-        testPostForm = PostFormDTO().apply {
-            title = "테스트 게시글"
-            summary = "테스트 요약"
-            content = "테스트 내용"
-            images = "test.jpg"
-            category_title = "테스트 카테고리"
-            tags = "Kotlin,Spring"
-        }
+        testUser =
+            User(
+                id = 1,
+                username = "testuser",
+                email = "test@example.com",
+                hashedPassword = "",
+                imageUrl = "profile.jpg",
+                githubUrl = "",
+                summary = "테스트 사용자",
+            )
+        testCategory =
+            Category(
+                id = 1,
+                title = "테스트 카테고리",
+                thumbnail = "",
+            )
+        testTags =
+            listOf(
+                Tag(1, "Kotlin"),
+                Tag(2, "Spring"),
+            )
+        testPostForm =
+            PostFormDTO().apply {
+                title = "테스트 게시글"
+                summary = "테스트 요약"
+                content = "테스트 내용"
+                images = "test.jpg"
+                category_title = "테스트 카테고리"
+                tags = "Kotlin,Spring"
+            }
     }
 
     @Test
@@ -109,14 +112,15 @@ class PostHandlerTest {
 
     @Test
     fun `잘못된 요청 데이터로 게시글 생성시 400 에러를 반환한다`() {
-        val invalidPostForm = PostFormDTO().apply {
-            title = ""
-            summary = ""
-            content = ""
-            images = ""
-            category_title = ""
-            tags = ""
-        }
+        val invalidPostForm =
+            PostFormDTO().apply {
+                title = ""
+                summary = ""
+                content = ""
+                images = ""
+                category_title = ""
+                tags = ""
+            }
 
         whenever(validationService.checkValidForm<PostFormDTO>(any(), any()))
             .thenThrow(IllegalArgumentException("포스트 제목이 비어있습니다"))
@@ -164,16 +168,17 @@ class PostHandlerTest {
 
     @Test
     fun `게시글 경로 목록 조회가 성공적으로 처리된다`() {
-        val postPaths = listOf(
-            com.ydh.jigglog.domain.dto.PostPathDTO().apply {
-                id = 1
-                title = "첫 번째 게시글"
-            },
-            com.ydh.jigglog.domain.dto.PostPathDTO().apply {
-                id = 2
-                title = "두 번째 게시글"
-            }
-        )
+        val postPaths =
+            listOf(
+                com.ydh.jigglog.domain.dto.PostPathDTO().apply {
+                    id = 1
+                    title = "첫 번째 게시글"
+                },
+                com.ydh.jigglog.domain.dto.PostPathDTO().apply {
+                    id = 2
+                    title = "두 번째 게시글"
+                },
+            )
 
         whenever(postService.getPostPath()).thenReturn(Mono.just(postPaths))
 
@@ -192,38 +197,41 @@ class PostHandlerTest {
 
     @Test
     fun `게시글 업데이트가 성공적으로 처리된다`() {
-        val updateForm = UpdateFormDTO().apply {
-            title = "수정된 제목"
-            summary = "수정된 요약"
-            content = "수정된 내용"
-            images = "updated.jpg"
-        }
-        val updatedPostDTO = com.ydh.jigglog.domain.dto.PostDTO().apply {
-            id = 1
-            title = "수정된 제목"
-            summary = "수정된 요약"
-            content = "수정된 내용"
-            images = "updated.jpg"
-            viewcount = 1
-            site = null
-            createdAt = LocalDateTime.now()
-            updatedAt = LocalDateTime.now()
-            user = testUser
-            category = testCategory
-            tags = testTags.toMutableList()
-        }
-        val originalPost = Post().apply {
-            id = 1
-            title = "원본 제목"
-            summary = "원본 요약"
-            content = "원본 내용"
-            images = "original.jpg"
-            userId = 1
-            categoryId = 1
-            viewcount = 1
-            createdAt = LocalDateTime.now()
-            updatedAt = LocalDateTime.now()
-        }
+        val updateForm =
+            UpdateFormDTO().apply {
+                title = "수정된 제목"
+                summary = "수정된 요약"
+                content = "수정된 내용"
+                images = "updated.jpg"
+            }
+        val updatedPostDTO =
+            com.ydh.jigglog.domain.dto.PostDTO().apply {
+                id = 1
+                title = "수정된 제목"
+                summary = "수정된 요약"
+                content = "수정된 내용"
+                images = "updated.jpg"
+                viewcount = 1
+                site = null
+                createdAt = LocalDateTime.now()
+                updatedAt = LocalDateTime.now()
+                user = testUser
+                category = testCategory
+                tags = testTags.toMutableList()
+            }
+        val originalPost =
+            Post().apply {
+                id = 1
+                title = "원본 제목"
+                summary = "원본 요약"
+                content = "원본 내용"
+                images = "original.jpg"
+                userId = 1
+                categoryId = 1
+                viewcount = 1
+                createdAt = LocalDateTime.now()
+                updatedAt = LocalDateTime.now()
+            }
 
         whenever(securityService.getLoggedInUser(any())).thenReturn(Mono.just(testUser))
         whenever(postService.getOnlyPost(1)).thenReturn(Mono.just(originalPost))
@@ -245,12 +253,13 @@ class PostHandlerTest {
 
     @Test
     fun `권한이 없는 사용자의 게시글 업데이트 요청시 400 에러를 반환한다`() {
-        val updateForm = UpdateFormDTO().apply {
-            title = "수정된 제목"
-            summary = null
-            content = null
-            images = null
-        }
+        val updateForm =
+            UpdateFormDTO().apply {
+                title = "수정된 제목"
+                summary = null
+                content = null
+                images = null
+            }
 
         whenever(securityService.getLoggedInUser(any())).thenReturn(Mono.just(testUser))
         whenever(securityService.isOwner(testUser))
@@ -295,18 +304,19 @@ class PostHandlerTest {
             .jsonPath("$.message").isEqualTo("권한이 없습니다")
     }
 
-    private fun createMockPostDTO() = com.ydh.jigglog.domain.dto.PostDTO().apply {
-        id = 1
-        title = "테스트 게시글"
-        summary = "테스트 요약"
-        content = "테스트 내용"
-        images = "test.jpg"
-        viewcount = 1
-        site = null
-        createdAt = LocalDateTime.now()
-        updatedAt = LocalDateTime.now()
-        user = testUser
-        category = testCategory
-        tags = testTags
-    }
+    private fun createMockPostDTO() =
+        com.ydh.jigglog.domain.dto.PostDTO().apply {
+            id = 1
+            title = "테스트 게시글"
+            summary = "테스트 요약"
+            content = "테스트 내용"
+            images = "test.jpg"
+            viewcount = 1
+            site = null
+            createdAt = LocalDateTime.now()
+            updatedAt = LocalDateTime.now()
+            user = testUser
+            category = testCategory
+            tags = testTags
+        }
 } 

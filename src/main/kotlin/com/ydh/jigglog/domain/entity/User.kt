@@ -19,5 +19,5 @@ class User(
     @Column("githubUrl")
     val githubUrl: String? = "",
     @Column("summary")
-    val summary: String? = ""
+    val summary: String? = "",
 )

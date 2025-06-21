@@ -7,13 +7,12 @@ import org.springframework.web.reactive.function.server.router
 
 @Component
 class PortfolioRouter(private val handler: PortfolioHandler) {
-
     @Bean
-    fun portfolioRouterFunction() = router {
-        "/api/portfolio".nest {
-            GET("", handler::getAll)
-            GET("/{portfolioId}", handler::get)
+    fun portfolioRouterFunction() =
+        router {
+            "/api/portfolio".nest {
+                GET("", handler::getAll)
+                GET("/{portfolioId}", handler::get)
+            }
         }
-    }
-
 }

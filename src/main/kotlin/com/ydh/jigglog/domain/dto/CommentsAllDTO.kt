@@ -2,7 +2,7 @@ package com.ydh.jigglog.domain.dto
 
 import java.time.LocalDateTime
 
-class CommentsAllDTO (
+class CommentsAllDTO(
     var comment_id: Int = 0,
     var comment_content: String? = "",
     var comment_createdat: LocalDateTime? = LocalDateTime.now(),
@@ -24,5 +24,5 @@ class CommentsAllDTO (
     var recomment_email: String? = "",
     var recomment_imageurl: String? = "",
     var recomment_githuburl: String? = "",
-    var recomment_summary: String? = ""
+    var recomment_summary: String? = "",
 )

@@ -11,9 +11,7 @@ import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories
 
 @Configuration
 @EnableR2dbcRepositories
-open class R2DBCConfig: AbstractR2dbcConfiguration(
-) {
-
+open class R2DBCConfig : AbstractR2dbcConfiguration() {
     @Value("\${spring.r2dbc.url}")
     lateinit var url: String
 
@@ -31,7 +29,6 @@ open class R2DBCConfig: AbstractR2dbcConfiguration(
 
     @Bean
     open override fun connectionFactory(): ConnectionFactory {
-
         return MySqlConnectionFactory.from(
             MySqlConnectionConfiguration.builder()
                 .host(url)
@@ -39,7 +36,7 @@ open class R2DBCConfig: AbstractR2dbcConfiguration(
                 .port(port.toInt())
                 .database(database)
                 .username(username)
-                .build()
+                .build(),
         )
     }
 }

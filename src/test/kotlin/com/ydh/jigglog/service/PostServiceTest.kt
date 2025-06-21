@@ -17,7 +17,6 @@ import java.time.LocalDateTime
 
 @ExtendWith(MockitoExtension::class)
 class PostServiceTest {
-
     @Mock
     private lateinit var postRepository: PostRepository
 
@@ -43,76 +42,84 @@ class PostServiceTest {
 
     @BeforeEach
     fun setUp() {
-        postService = PostService(
-            postRepository,
-            userRepository,
-            categoryRepository,
-            postToTagRepository,
-            resumeCacheRepository
-        )
+        postService =
+            PostService(
+                postRepository,
+                userRepository,
+                categoryRepository,
+                postToTagRepository,
+                resumeCacheRepository,
+            )
 
-        testUser = User(
-            id = 1,
-            username = "testuser",
-            email = "test@example.com",
-            hashedPassword = "hashedPassword",
-            imageUrl = "profile.jpg",
-            githubUrl = "",
-            summary = "테스트 사용자"
-        )
+        testUser =
+            User(
+                id = 1,
+                username = "testuser",
+                email = "test@example.com",
+                hashedPassword = "hashedPassword",
+                imageUrl = "profile.jpg",
+                githubUrl = "",
+                summary = "테스트 사용자",
+            )
 
-        testCategory = Category(
-            id = 1,
-            title = "테스트 카테고리",
-            thumbnail = ""
-        )
+        testCategory =
+            Category(
+                id = 1,
+                title = "테스트 카테고리",
+                thumbnail = "",
+            )
 
-        testTags = listOf(
-            Tag(1, "Kotlin"),
-            Tag(2, "Spring")
-        )
+        testTags =
+            listOf(
+                Tag(1, "Kotlin"),
+                Tag(2, "Spring"),
+            )
 
-        testPost = Post().apply {
-            id = 1
-            title = "테스트 게시글"
-            summary = "테스트 요약"
-            content = "테스트 내용"
-            images = "test.jpg"
-            userId = 1
-            categoryId = 1
-            viewcount = 0
-            createdAt = LocalDateTime.now()
-            updatedAt = LocalDateTime.now()
-        }
+        testPost =
+            Post().apply {
+                id = 1
+                title = "테스트 게시글"
+                summary = "테스트 요약"
+                content = "테스트 내용"
+                images = "test.jpg"
+                userId = 1
+                categoryId = 1
+                viewcount = 0
+                createdAt = LocalDateTime.now()
+                updatedAt = LocalDateTime.now()
+            }
 
-        testPostForm = PostFormDTO().apply {
-            title = "테스트 게시글"
-            summary = "테스트 요약"
-            content = "테스트 내용"
-            images = "test.jpg"
-            category_title = "테스트 카테고리"
-            tags = "Kotlin,Spring"
-        }
+        testPostForm =
+            PostFormDTO().apply {
+                title = "테스트 게시글"
+                summary = "테스트 요약"
+                content = "테스트 내용"
+                images = "test.jpg"
+                category_title = "테스트 카테고리"
+                tags = "Kotlin,Spring"
+            }
     }
 
     @Test
     fun `게시글을 성공적으로 생성할 수 있다`() {
-        val savedPost = Post().apply {
-            id = 1
-            title = "테스트 게시글"
-            summary = "테스트 요약"
-            content = "테스트 내용"
-            images = "test.jpg"
-            userId = 1
-            categoryId = 1
-            viewcount = 1
-        }
-        val postToTags = testTags.map { tag ->
-            PostToTag().apply {
-                postId = 1
-                tagId = tag.id
+        val savedPost =
+            Post().apply {
+                id = 1
+                title = "테스트 게시글"
+                summary = "테스트 요약"
+                content = "테스트 내용"
+                images = "test.jpg"
+                userId = 1
+                categoryId = 1
+                viewcount = 1
             }
-        }
+        val postToTags =
+            testTags.map { tag ->
+                PostToTag().apply {
+                    postId = 1
+                    tagId = tag.id
+                }
+            }
 
         whenever(postRepository.save(any<Post>())).thenReturn(Mono.just(savedPost))
         whenever(postToTagRepository.saveAll(any<List<PostToTag>>())).thenReturn(Flux.fromIterable(postToTags))
@@ -127,11 +134,11 @@ class PostServiceTest {
         StepVerifier.create(result)
             .expectNextMatches { postDTO ->
                 postDTO.title == "테스트 게시글" &&
-                postDTO.summary == "테스트 요약" &&
-                postDTO.content == "테스트 내용" &&
-                postDTO.user?.username == "testuser" &&
-                postDTO.category?.title == "테스트 카테고리" &&
-                postDTO.tags?.size == 2
+                    postDTO.summary == "테스트 요약" &&
+                    postDTO.content == "테스트 내용" &&
+                    postDTO.user?.username == "testuser" &&
+                    postDTO.category?.title == "테스트 카테고리" &&
+                    postDTO.tags?.size == 2
             }
             .verifyComplete()
 
@@ -148,7 +155,7 @@ class PostServiceTest {
         StepVerifier.create(result)
             .expectNextMatches { post ->
                 post.id == 1 &&
-                post.title == "테스트 게시글"
+                    post.title == "테스트 게시글"
             }
             .verifyComplete()
 
@@ -157,16 +164,17 @@ class PostServiceTest {
 
     @Test
     fun `게시글 상세 정보를 조회할 수 있다`() {
-        val updatedPost = Post().apply {
-            id = 1
-            title = "테스트 게시글"
-            summary = "테스트 요약"
-            content = "테스트 내용"
-            images = "test.jpg"
-            userId = 1
-            categoryId = 1
-            viewcount = 1
-        }
+        val updatedPost =
+            Post().apply {
+                id = 1
+                title = "테스트 게시글"
+                summary = "테스트 요약"
+                content = "테스트 내용"
+                images = "test.jpg"
+                userId = 1
+                categoryId = 1
+                viewcount = 1
+            }
 
         whenever(postRepository.existsById(1)).thenReturn(Mono.just(true))
         whenever(postRepository.findById(1)).thenReturn(Mono.just(testPost))
@@ -180,11 +188,11 @@ class PostServiceTest {
         StepVerifier.create(result)
             .expectNextMatches { postDTO ->
                 postDTO?.title == "테스트 게시글" &&
-                postDTO?.viewcount == 1 &&
-                postDTO?.user?.username == "testuser" &&
-                postDTO?.user?.hashedPassword == "" &&
-                postDTO?.category?.title == "테스트 카테고리" &&
-                postDTO?.tags?.size == 2
+                    postDTO?.viewcount == 1 &&
+                    postDTO?.user?.username == "testuser" &&
+                    postDTO?.user?.hashedPassword == "" &&
+                    postDTO?.category?.title == "테스트 카테고리" &&
+                    postDTO?.tags?.size == 2
             }
             .verifyComplete()
 
@@ -212,18 +220,19 @@ class PostServiceTest {
 
     @Test
     fun `게시글 경로 목록을 조회할 수 있다`() {
-        val posts = listOf(
-            testPost,
-            Post().apply {
-                id = 2
-                title = "두 번째 게시글"
-                summary = "테스트 요약"
-                content = "테스트 내용"
-                images = "test.jpg"
-                userId = 1
-                categoryId = 1
-            }
-        )
+        val posts =
+            listOf(
+                testPost,
+                Post().apply {
+                    id = 2
+                    title = "두 번째 게시글"
+                    summary = "테스트 요약"
+                    content = "테스트 내용"
+                    images = "test.jpg"
+                    userId = 1
+                    categoryId = 1
+                },
+            )
 
         whenever(postRepository.findAll()).thenReturn(Flux.fromIterable(posts))
 
@@ -232,8 +241,8 @@ class PostServiceTest {
         StepVerifier.create(result)
             .expectNextMatches { pathList ->
                 pathList.size == 2 &&
-                pathList[0].title == "테스트 게시글" &&
-                pathList[1].title == "두 번째 게시글"
+                    pathList[0].title == "테스트 게시글" &&
+                    pathList[1].title == "두 번째 게시글"
             }
             .verifyComplete()
 
@@ -242,21 +251,23 @@ class PostServiceTest {
 
     @Test
     fun `게시글을 업데이트할 수 있다`() {
-        val updateForm = UpdateFormDTO().apply {
-            title = "수정된 제목"
-            summary = "수정된 요약"
-            content = "수정된 내용"
-            images = "updated.jpg"
-        }
-        val updatedPost = Post().apply {
-            id = 1
-            title = "수정된 제목"
-            summary = "수정된 요약"
-            content = "수정된 내용"
-            images = "updated.jpg"
-            userId = 1
-            categoryId = 1
-        }
+        val updateForm =
+            UpdateFormDTO().apply {
+                title = "수정된 제목"
+                summary = "수정된 요약"
+                content = "수정된 내용"
+                images = "updated.jpg"
+            }
+        val updatedPost =
+            Post().apply {
+                id = 1
+                title = "수정된 제목"
+                summary = "수정된 요약"
+                content = "수정된 내용"
+                images = "updated.jpg"
+                userId = 1
+                categoryId = 1
+            }
 
         whenever(postRepository.save(any<Post>())).thenReturn(Mono.just(updatedPost))
         whenever(postRepository.existsById(1)).thenReturn(Mono.just(true))
@@ -270,9 +281,9 @@ class PostServiceTest {
         StepVerifier.create(result)
             .expectNextMatches { postDTO ->
                 postDTO.title == "수정된 제목" &&
-                postDTO.summary == "수정된 요약" &&
-                postDTO.content == "수정된 내용" &&
-                postDTO.images == "updated.jpg"
+                    postDTO.summary == "수정된 요약" &&
+                    postDTO.content == "수정된 내용" &&
+                    postDTO.images == "updated.jpg"
             }
             .verifyComplete()
 
@@ -294,12 +305,13 @@ class PostServiceTest {
 
     @Test
     fun `이력서를 조회할 수 있다`() {
-        val resumePost = Post().apply {
-            id = 1
-            title = "이력서"
-            summary = "이력서 요약"
-            content = "이력서 내용"
-        }
+        val resumePost =
+            Post().apply {
+                id = 1
+                title = "이력서"
+                summary = "이력서 요약"
+                content = "이력서 내용"
+            }
         whenever(resumeCacheRepository.findResumeAndCaching()).thenReturn(Mono.just(resumePost))
 
         val result = postService.getResume()

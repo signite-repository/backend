@@ -15,14 +15,15 @@ import reactor.kotlin.core.publisher.toFlux
 import reactor.kotlin.core.publisher.toMono
 
 @Controller
-class TagService (
+class TagService(
     @Autowired private val tagRepository: TagRepository,
     @Autowired private val postRepository: PostRepository,
-    @Autowired private val postToTagRepository: PostToTagRepository
+    @Autowired private val postToTagRepository: PostToTagRepository,
 ) {
     companion object {
         private val logger = LoggerFactory.getLogger(TagService::class.java)
     }
+
     // 태그 만들기
     fun createTagAll(titles: List<String>): Mono<List<Tag>> {
         var tags = mutableListOf<Tag>()
@@ -31,20 +32,28 @@ class TagService (
         }
         return tagRepository.saveAll(tags).collectList().toMono()
     }
+
     // 태그의 포스트 중 없는 거 가져오기
-    fun getTagNotExist(parsedTags: Flux<String>, tags: List<String>): Flux<String> {
+    fun getTagNotExist(
+        parsedTags: Flux<String>,
+        tags: List<String>,
+    ): Flux<String> {
         return parsedTags.filter {
-            title -> title !in tags && title != ""
+                title ->
+            title !in tags && title != ""
         }
     }
+
     // 태그의 포스트 (post 가 있는) 가져오기
     fun getTagAllContainPost(): Flux<Tag> {
         return tagRepository.findTagsAllContainPost()
     }
+
     // 태그 제목으로 모두 가져오기
     fun getTagAllByTitle(titles: List<String>): Flux<Tag> {
         return tagRepository.findAllByTitleIn(titles)
     }
+
     // 태그 생성
     fun createTagParseAndMakeAll(tagsString: String): Mono<MutableList<Tag>> {
         return Mono.just(tagsString)
@@ -52,7 +61,8 @@ class TagService (
             .flatMap { tagsString ->
                 Mono.zip(
                     getTagAllContainPost().collectList().toMono(),
-                    tagsString.toMono())
+                    tagsString.toMono(),
+                )
             }
             // 1) 원문 태그 파싱
             // 2) 없는 태그 모으기
@@ -67,7 +77,7 @@ class TagService (
                 }
                 Mono.zip(
                     parsedTags.filter { tag -> tag != "" }.toMono(),
-                    getTagNotExist(parsedTagFlux, tags).collectList().toMono()
+                    getTagNotExist(parsedTagFlux, tags).collectList().toMono(),
                 )
             }
             // 태그 모두 만들기
@@ -76,7 +86,7 @@ class TagService (
                 val tagsNotExist = it.t2
                 Mono.zip(
                     parsedTags.toMono(),
-                    createTagAll(tagsNotExist).toMono()
+                    createTagAll(tagsNotExist).toMono(),
                 )
             }
             // 해당 제목 태그 모두 리턴
@@ -85,6 +95,7 @@ class TagService (
                 getTagAllByTitle(parsedTags).collectList().toMono()
             }
     }
+
     // 태그 아이디로 조인 삭제
     fun deleteTagsByTagID(tagId: Int): Mono<Void> {
         return Mono.just(tagId)
@@ -92,6 +103,7 @@ class TagService (
                 postToTagRepository.deleteByTagId(it).toMono()
             }
     }
+
     // 포스트 아이디로 조인 삭제
     fun deleteTagsByPostID(postId: Int): Mono<Void> {
         return Mono.just(postId)
@@ -101,32 +113,37 @@ class TagService (
     }
 
     // 태그 아이디로 포스트 가져오기
-    fun getAllPostByTagId(tagId: Int, offset: Int, limit: Int? = 8): Mono<List<PostInCategoryDTO>> {
-        return  Mono.just(tagId).flatMap { tagId ->
+    fun getAllPostByTagId(
+        tagId: Int,
+        offset: Int,
+        limit: Int? = 8,
+    ): Mono<List<PostInCategoryDTO>> {
+        return Mono.just(tagId).flatMap { tagId ->
             postRepository.findAllByTagId(tagId, offset, limit).collectList().toMono()
-        }.flatMap{
+        }.flatMap {
             var posts = mutableListOf<PostInCategoryDTO>()
             for (post in it) {
-                var result = PostInCategoryDTO(
-                    id = post.id,
-                    summary = post.summary,
-                    title = post.title,
-                    createdAt = post.createdat,
-                    postcount = post.postcount,
-                    viewcount = post.viewcount,
-                    commentcount = post.commentcount,
-                    last = post.last,
-                    images = post.images,
-                    user = UserInPostCategoryDTO(
-                        id = post.userid,
-                        username = post.username,
-                        imageUrl = post.imageurl,
+                var result =
+                    PostInCategoryDTO(
+                        id = post.id,
+                        summary = post.summary,
+                        title = post.title,
+                        createdAt = post.createdat,
+                        postcount = post.postcount,
+                        viewcount = post.viewcount,
+                        commentcount = post.commentcount,
+                        last = post.last,
+                        images = post.images,
+                        user =
+                            UserInPostCategoryDTO(
+                                id = post.userid,
+                                username = post.username,
+                                imageUrl = post.imageurl,
+                            ),
                     )
-                )
                 posts.add(result)
             }
             posts.toMono()
         }
     }
-
 }

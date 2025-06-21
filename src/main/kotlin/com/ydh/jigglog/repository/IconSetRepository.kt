@@ -6,7 +6,8 @@ import org.springframework.stereotype.Repository
 import reactor.core.publisher.Flux
 
 @Repository
-interface IconSetRepository: ReactiveCrudRepository<IconSet, Int> {
+interface IconSetRepository : ReactiveCrudRepository<IconSet, Int> {
     fun findAllByPostIdIn(postIds: List<Int>): Flux<IconSet>
+
     fun findByPostId(postId: Int): Flux<IconSet>
 }

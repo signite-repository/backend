@@ -1,6 +1,5 @@
 package com.ydh.jigglog.domain.entity
 
-import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 
 class Upload(
@@ -9,4 +8,3 @@ class Upload(
     @Column("location")
     var location: String? = "",
 )
-

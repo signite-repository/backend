@@ -2,7 +2,6 @@ package com.ydh.jigglog.integration
 
 import com.ydh.jigglog.config.TestConfig
 import com.ydh.jigglog.domain.dto.PostFormDTO
-import com.ydh.jigglog.domain.dto.UserFormDTO
 import com.ydh.jigglog.domain.entity.*
 import com.ydh.jigglog.repository.*
 import org.junit.jupiter.api.BeforeEach
@@ -10,26 +9,25 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
-import org.springframework.http.MediaType
 import org.springframework.test.context.TestPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.reactive.function.BodyInserters
 import reactor.test.StepVerifier
 import java.time.LocalDateTime
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import(TestConfig::class)
-@TestPropertySource(properties = [
-    "spring.r2dbc.url=r2dbc:h2:mem:///testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
-    "spring.r2dbc.username=sa",
-    "spring.r2dbc.password=",
-    "spring.data.redis.host=localhost",
-    "spring.data.redis.port=6379"
-])
+@TestPropertySource(
+    properties = [
+        "spring.r2dbc.url=r2dbc:h2:mem:///testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+        "spring.r2dbc.username=sa",
+        "spring.r2dbc.password=",
+        "spring.data.redis.host=localhost",
+        "spring.data.redis.port=6379",
+    ],
+)
 @Transactional
 class IntegrationTest {
-
     @Autowired
     private lateinit var webTestClient: WebTestClient
 
@@ -51,26 +49,29 @@ class IntegrationTest {
 
     @BeforeEach
     fun setUp() {
-        testUser = User(
-            id = 0,
-            username = "testuser",
-            email = "test@example.com",
-            hashedPassword = "hashedPassword123",
-            imageUrl = "profile.jpg",
-            githubUrl = "",
-            summary = "테스트 사용자"
-        )
+        testUser =
+            User(
+                id = 0,
+                username = "testuser",
+                email = "test@example.com",
+                hashedPassword = "hashedPassword123",
+                imageUrl = "profile.jpg",
+                githubUrl = "",
+                summary = "테스트 사용자",
+            )
 
-        testCategory = Category(
-            id = 0,
-            title = "테스트 카테고리",
-            thumbnail = "category.jpg"
-        )
+        testCategory =
+            Category(
+                id = 0,
+                title = "테스트 카테고리",
+                thumbnail = "category.jpg",
+            )
 
-        testTags = listOf(
-            Tag(0, "Kotlin"),
-            Tag(0, "Spring")
-        )
+        testTags =
+            listOf(
+                Tag(0, "Kotlin"),
+                Tag(0, "Spring"),
+            )
     }
 
     @Test
@@ -83,26 +84,28 @@ class IntegrationTest {
         assert(savedCategory != null)
         assert(savedTags != null && savedTags.size == 2)
 
-        val postForm = PostFormDTO().apply {
-            title = "통합 테스트 게시글"
-            summary = "통합 테스트 요약"
-            content = "통합 테스트 내용"
-            images = "test.jpg"
-            category_title = "테스트 카테고리"
-            tags = "Kotlin,Spring"
-        }
+        val postForm =
+            PostFormDTO().apply {
+                title = "통합 테스트 게시글"
+                summary = "통합 테스트 요약"
+                content = "통합 테스트 내용"
+                images = "test.jpg"
+                category_title = "테스트 카테고리"
+                tags = "Kotlin,Spring"
+            }
 
-        val createdPost = Post().apply {
-            title = postForm.title!!
-            summary = postForm.summary!!
-            content = postForm.content!!
-            images = postForm.images!!
-            userId = savedUser?.id ?: 0
-            categoryId = savedCategory?.id ?: 0
-            viewcount = 0
-            createdAt = LocalDateTime.now()
-            updatedAt = LocalDateTime.now()
-        }
+        val createdPost =
+            Post().apply {
+                title = postForm.title!!
+                summary = postForm.summary!!
+                content = postForm.content!!
+                images = postForm.images!!
+                userId = savedUser?.id ?: 0
+                categoryId = savedCategory?.id ?: 0
+                viewcount = 0
+                createdAt = LocalDateTime.now()
+                updatedAt = LocalDateTime.now()
+            }
 
         val savedPost = postRepository.save(createdPost).block()
         assert(savedPost != null)
@@ -113,25 +116,27 @@ class IntegrationTest {
 
     @Test
     fun `데이터베이스 연결 및 기본 CRUD 작업 테스트`() {
-        val testPost = Post().apply {
-            title = "CRUD 테스트 게시글"
-            summary = "CRUD 테스트"
-            content = "CRUD 테스트 내용"
-            images = "crud.jpg"
-            userId = 1
-            categoryId = 1
-            viewcount = 0
-            createdAt = LocalDateTime.now()
-            updatedAt = LocalDateTime.now()
-        }
+        val testPost =
+            Post().apply {
+                title = "CRUD 테스트 게시글"
+                summary = "CRUD 테스트"
+                content = "CRUD 테스트 내용"
+                images = "crud.jpg"
+                userId = 1
+                categoryId = 1
+                viewcount = 0
+                createdAt = LocalDateTime.now()
+                updatedAt = LocalDateTime.now()
+            }
 
-        val saveAndFind = postRepository.save(testPost)
-            .flatMap { saved -> postRepository.findById(saved.id) }
+        val saveAndFind =
+            postRepository.save(testPost)
+                .flatMap { saved -> postRepository.findById(saved.id) }
 
         StepVerifier.create(saveAndFind)
             .expectNextMatches { found ->
                 found.title == "CRUD 테스트 게시글" &&
-                found.content == "CRUD 테스트 내용"
+                    found.content == "CRUD 테스트 내용"
             }
             .verifyComplete()
     }
@@ -156,58 +161,62 @@ class IntegrationTest {
         StepVerifier.create(findAllTags)
             .expectNextMatches { tags ->
                 tags.size >= 2 &&
-                tags.any { it.title == "Kotlin" } &&
-                tags.any { it.title == "Spring" }
+                    tags.any { it.title == "Kotlin" } &&
+                    tags.any { it.title == "Spring" }
             }
             .verifyComplete()
     }
 
     @Test
     fun `사용자 저장 및 조회 테스트`() {
-        val saveAndFind = userRepository.save(testUser)
-            .flatMap { saved -> userRepository.findById(saved.id) }
+        val saveAndFind =
+            userRepository.save(testUser)
+                .flatMap { saved -> userRepository.findById(saved.id) }
 
         StepVerifier.create(saveAndFind)
             .expectNextMatches { user ->
                 user.username == "testuser" &&
-                user.email == "test@example.com"
+                    user.email == "test@example.com"
             }
             .verifyComplete()
     }
 
     @Test
     fun `사용자명으로 사용자 조회 테스트`() {
-        val saveAndFindByUsername = userRepository.save(testUser)
-            .flatMap { userRepository.findByUsername("testuser") }
+        val saveAndFindByUsername =
+            userRepository.save(testUser)
+                .flatMap { userRepository.findByUsername("testuser") }
 
         StepVerifier.create(saveAndFindByUsername)
             .expectNextMatches { user ->
                 user.username == "testuser" &&
-                user.hashedPassword == "hashedPassword123"
+                    user.hashedPassword == "hashedPassword123"
             }
             .verifyComplete()
     }
 
     @Test
     fun `게시글 조회수 업데이트 테스트`() {
-        val post = Post().apply {
-            title = "조회수 테스트"
-            summary = "테스트"
-            content = "조회수 증가 테스트"
-            images = "view.jpg"
-            userId = 1
-            categoryId = 1
-            viewcount = 0
-            createdAt = LocalDateTime.now()
-            updatedAt = LocalDateTime.now()
-        }
-
-        val viewCountTest = postRepository.save(post)
-            .flatMap { saved ->
-                saved.viewcount = saved.viewcount + 1
-                postRepository.save(saved)
+        val post =
+            Post().apply {
+                title = "조회수 테스트"
+                summary = "테스트"
+                content = "조회수 증가 테스트"
+                images = "view.jpg"
+                userId = 1
+                categoryId = 1
+                viewcount = 0
+                createdAt = LocalDateTime.now()
+                updatedAt = LocalDateTime.now()
             }
-            .flatMap { updated -> postRepository.findById(updated.id) }
+
+        val viewCountTest =
+            postRepository.save(post)
+                .flatMap { saved ->
+                    saved.viewcount = saved.viewcount + 1
+                    postRepository.save(saved)
+                }
+                .flatMap { updated -> postRepository.findById(updated.id) }
 
         StepVerifier.create(viewCountTest)
             .expectNextMatches { found ->
@@ -218,37 +227,39 @@ class IntegrationTest {
 
     @Test
     fun `다중 게시글 조회 및 정렬 테스트`() {
-        val posts = listOf(
-            Post().apply {
-                title = "첫 번째 게시글"
-                summary = "첫 번째"
-                content = "첫 번째 내용"
-                userId = 1
-                categoryId = 1
-                viewcount = 0
-                createdAt = LocalDateTime.now()
-                updatedAt = LocalDateTime.now()
-            },
-            Post().apply {
-                title = "두 번째 게시글"
-                summary = "두 번째"
-                content = "두 번째 내용"
-                userId = 1
-                categoryId = 1
-                viewcount = 5
-                createdAt = LocalDateTime.now()
-                updatedAt = LocalDateTime.now()
-            }
-        )
+        val posts =
+            listOf(
+                Post().apply {
+                    title = "첫 번째 게시글"
+                    summary = "첫 번째"
+                    content = "첫 번째 내용"
+                    userId = 1
+                    categoryId = 1
+                    viewcount = 0
+                    createdAt = LocalDateTime.now()
+                    updatedAt = LocalDateTime.now()
+                },
+                Post().apply {
+                    title = "두 번째 게시글"
+                    summary = "두 번째"
+                    content = "두 번째 내용"
+                    userId = 1
+                    categoryId = 1
+                    viewcount = 5
+                    createdAt = LocalDateTime.now()
+                    updatedAt = LocalDateTime.now()
+                },
+            )
 
-        val saveAllAndFind = postRepository.saveAll(posts)
-            .then(postRepository.findAll().collectList())
+        val saveAllAndFind =
+            postRepository.saveAll(posts)
+                .then(postRepository.findAll().collectList())
 
         StepVerifier.create(saveAllAndFind)
             .expectNextMatches { savedPosts ->
                 savedPosts.size >= 2 &&
-                savedPosts.any { it.title == "첫 번째 게시글" } &&
-                savedPosts.any { it.title == "두 번째 게시글" }
+                    savedPosts.any { it.title == "첫 번째 게시글" } &&
+                    savedPosts.any { it.title == "두 번째 게시글" }
             }
             .verifyComplete()
     }

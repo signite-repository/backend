@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository
 import reactor.core.publisher.Flux
 
 @Repository
-interface ReCommentRepository: ReactiveCrudRepository<ReComment, Int> {
+interface ReCommentRepository : ReactiveCrudRepository<ReComment, Int> {
     fun findAllByCommentIdIn(commentIds: List<Int>): Flux<ReComment>
 }

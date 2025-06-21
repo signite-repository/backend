@@ -7,10 +7,10 @@ import org.springframework.web.reactive.function.server.router
 
 @Configuration
 class UploadRouter(private val uploadHandler: UploadHandler) {
-
     @Bean
-    fun uploadRoutes() = router {
-        POST("/api/upload", uploadHandler::uploadFile)
-        DELETE("/api/upload/{fileName}", uploadHandler::deleteFile)
-    }
+    fun uploadRoutes() =
+        router {
+            POST("/api/upload", uploadHandler::uploadFile)
+            DELETE("/api/upload/{fileName}", uploadHandler::deleteFile)
+        }
 }

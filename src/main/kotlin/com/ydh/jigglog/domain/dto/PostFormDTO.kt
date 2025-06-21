@@ -5,6 +5,6 @@ class PostFormDTO {
     var summary: String? = ""
     var content: String? = ""
     var images: String? = ""
-    var category_title: String? = ""
+    var categoryTitle: String? = ""
     var tags: String? = ""
 }

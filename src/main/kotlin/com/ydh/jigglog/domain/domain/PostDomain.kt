@@ -2,7 +2,6 @@ package com.ydh.jigglog.domain.domain
 
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
-import java.time.LocalDateTime
 
 class PostDomain(
     @Id
