@@ -1,0 +1,67 @@
+[package]
+name = "rust-websocket-server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# 비동기 런타임 (최적화된 features)
+tokio = { version = "1.46.1", features = ["net", "sync", "macros", "rt-multi-thread", "time"] }
+
+# WebSocket 처리
+futures-util = "0.3.31"
+tokio-tungstenite = { version = "0.27.0", features = ["native-tls"] }
+
+# HTTP 서버 (헬스체크용)
+axum = "0.7"
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors"] }
+
+# 직렬화
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.141"
+
+# 상태 관리 (동시성 개선)
+dashmap = "5.5"
+
+# ID 생성 (UUID 유지하되 nanoid도 옵션으로)
+uuid = { version = "1.17.0", features = ["serde", "v4"] }
+
+# Redis 클라이언트
+redis = { version = "0.24", features = ["tokio-comp", "json"] }
+
+# MongoDB 클라이언트
+mongodb = "2.8"
+
+# 시간 처리
+chrono = { version = "0.4", features = ["serde"] }
+
+# 에러 처리
+anyhow = "1.0"
+thiserror = "1.0"
+
+# 로깅
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# 검증
+validator = { version = "0.16", features = ["derive"] }
+
+# 유틸리티
+lazy_static = "1.4"
+regex = "1.10"
+
+# 환경 변수
+dotenv = "0.15"
+
+# 비동기 스트림
+futures = "0.3"
+
+[dev-dependencies]
+# 테스트 프레임워크
+tokio-test = "0.4"
+axum-test = "15.0"
+tower = { version = "0.4", features = ["util"] }
+hyper = { version = "1.0", features = ["full"] }
+serde_json = "1.0"
+tempfile = "3.8"
+url = "2.5"

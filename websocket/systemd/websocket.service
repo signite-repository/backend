@@ -1,0 +1,36 @@
+[Unit]
+Description=Signight WebSocket Server
+After=network.target mongodb.service redis.service
+
+[Service]
+Type=simple
+User=websocket
+Group=websocket
+WorkingDirectory=/opt/signight/websocket
+Environment="RUST_LOG=rust_websocket_server=info"
+Environment="SERVER_HOST=0.0.0.0"
+Environment="SERVER_PORT=8080"
+Environment="HTTP_PORT=3001"
+Environment="REDIS_URL=redis://localhost:6379"
+Environment="MONGODB_URL=mongodb://localhost:27017"
+Environment="MONGODB_DB_NAME=signight_websocket"
+ExecStart=/opt/signight/websocket/rust-websocket-server
+Restart=always
+RestartSec=10
+KillMode=mixed
+KillSignal=SIGTERM
+
+# 리소스 제한
+LimitNOFILE=65536
+MemoryLimit=512M
+CPUQuota=100%
+
+# 보안 설정
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/signight
+
+[Install]
+WantedBy=multi-user.target

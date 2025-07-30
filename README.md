@@ -1,12 +1,13 @@
-# 🚀 Signite - 차세대 MSA 블로그 플랫폼
+# 🚀 Signite - 차세대 MSA 플랫폼
 
-Spring Boot + Kubernetes + Istio + NATS 기반의 현대적인 마이크로서비스 아키텍처 블로그 플랫폼
+Spring Boot + Rust WebSocket + Kubernetes + Istio + NATS 기반의 현대적인 마이크로서비스 아키텍처 플랫폼
 
-## 🏗️ 아키텍처 개요
+## 아키텍처 개요
 
 ### 핵심 기술 스택
 - **Backend**: Spring Boot 3.3.7 (Kotlin) + WebFlux + R2DBC
-- **Database**: MariaDB + Redis Cache
+- **WebSocket**: Rust + tokio-tungstenite + Redis + MongoDB
+- **Database**: MariaDB + Redis Cache + MongoDB (WebSocket)
 - **Service Mesh**: Istio (인증/인가, mTLS, 트래픽 관리)
 - **Event Stream**: NATS JetStream
 - **Container**: Docker + Kubernetes
@@ -28,6 +29,12 @@ Spring Boot + Kubernetes + Istio + NATS 기반의 현대적인 마이크로서�
     │   User   │            │Category │            │   Tag     │
     │ Service  │            │ Service │            │ Service   │
     └──────────┘            └─────────┘            └───────────┘
+                                 │
+                        ┌────────▼────────┐
+                        │   WebSocket     │
+                        │   Server (Rust) │
+                        │ Redis + MongoDB │
+                        └─────────────────┘
                                  │
                            ┌─────▼─────┐
                            │   NATS    │
@@ -60,15 +67,14 @@ POST /api/comment/* → ACTIVE_MEMBER 이상
 GET /api/post/list → 인증 불필요 (게스트 허용)
 ```
 
-## 🚀 현대적 개발 워크플로우
+## 개발 워크플로우
 
-### 🔧 자동화된 개발 스크립트
+### 자동화 개발 스크립트
 
 #### 프로젝트 전체 관리 (루트 디렉토리)
 ```bash
-# 전체 환경 셋업 (원클릭)
+# 전체 환경 셋업
 ./dev.sh setup
-
 # 개발 모드 시작 (포트포워딩 + 로그 자동)
 ./dev.sh dev
 
@@ -100,7 +106,7 @@ GET /api/post/list → 인증 불필요 (게스트 허용)
 ./start.sh test
 ```
 
-### ⚡ 자동 버전 관리
+### 자동 버전 관리
 ```bash
 # Git 브랜치 + 커밋 해시 + 타임스탬프로 자동 버전 생성
 # 예: main-a1b2c3d-20241220-143022
@@ -113,7 +119,7 @@ signite-backend:latest
 kubectl set image deployment/signite-deployment signite-backend=signite-backend:${VERSION}
 ```
 
-### 💻 빠른 시작 (3분 완료)
+### 빠른 시작 (3분 완료)
 
 #### 1단계: 전체 환경 구축
 ```bash

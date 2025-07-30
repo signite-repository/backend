@@ -1,0 +1,118 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: websocket-config
+  namespace: signight
+data:
+  SERVER_HOST: "0.0.0.0"
+  SERVER_PORT: "8080"
+  HTTP_PORT: "3001"
+  REDIS_URL: "redis://redis:6379"
+  MONGODB_URL: "mongodb://admin:password@mongo:27017"
+  MONGODB_DB_NAME: "signight_websocket"
+  JWT_SECRET: "your-jwt-secret-key"
+  JWT_ISSUER: "https://auth.signite.com"
+  ALLOWED_ORIGINS: "http://localhost:5174,https://signight.com"
+  RUST_LOG: "rust_websocket_server=info,info"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: websocket-server
+  namespace: signight
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: websocket-server
+  template:
+    metadata:
+      labels:
+        app: websocket-server
+        version: v1
+    spec:
+      containers:
+      - name: websocket-server
+        image: signite-websocket:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: websocket
+          protocol: TCP
+        - containerPort: 3001
+          name: http
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: websocket-config
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3001
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 10"]
+      terminationGracePeriodSeconds: 30
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: websocket-service
+  namespace: signight
+spec:
+  selector:
+    app: websocket-server
+  ports:
+  - name: websocket
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  - name: http
+    port: 3001
+    targetPort: 3001
+    protocol: TCP
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: websocket-service-nodeport
+  namespace: signight
+spec:
+  selector:
+    app: websocket-server
+  ports:
+  - name: websocket
+    port: 8080
+    targetPort: 8080
+    nodePort: 30081
+    protocol: TCP
+  - name: http
+    port: 3001
+    targetPort: 3001
+    nodePort: 30082
+    protocol: TCP
+  type: NodePort 

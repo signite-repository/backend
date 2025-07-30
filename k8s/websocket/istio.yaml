@@ -1,0 +1,178 @@
+# Istio Gateway for WebSocket Server
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: websocket-gateway
+  namespace: default
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "ws.signight.com"
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: websocket-tls-secret
+    hosts:
+    - "ws.signight.com"
+
+---
+# VirtualService for WebSocket routing
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: websocket-vs
+  namespace: default
+spec:
+  hosts:
+  - "ws.signight.com"
+  gateways:
+  - websocket-gateway
+  http:
+  # WebSocket upgrade requests
+  - match:
+    - headers:
+        connection:
+          regex: ".*[Uu]pgrade.*"
+        upgrade:
+          exact: "websocket"
+    route:
+    - destination:
+        host: websocket-service
+        port:
+          number: 8080
+    timeout: 0s
+  # HTTP API requests
+  - match:
+    - uri:
+        prefix: "/health"
+    route:
+    - destination:
+        host: websocket-service
+        port:
+          number: 3001
+  - match:
+    - uri:
+        prefix: "/rooms"
+    route:
+    - destination:
+        host: websocket-service
+        port:
+          number: 3001
+  - match:
+    - uri:
+        prefix: "/chat"
+    route:
+    - destination:
+        host: websocket-service
+        port:
+          number: 3001
+  # Redirect HTTP to HTTPS
+  - match:
+    - uri:
+        prefix: "/"
+      headers:
+        ":scheme":
+          exact: "http"
+    redirect:
+      scheme: "https"
+      redirectCode: 301
+
+---
+# DestinationRule for load balancing
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: websocket-dr
+  namespace: default
+spec:
+  host: websocket-service
+  trafficPolicy:
+    loadBalancer:
+      consistentHash:
+        httpHeaderName: "X-User-ID"  # 사용자별 세션 유지
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 50
+        maxRequestsPerConnection: 10
+    outlierDetection:
+      consecutiveErrors: 3
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+
+---
+# ServiceEntry for external dependencies (선택사항)
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: external-mongodb
+  namespace: default
+spec:
+  hosts:
+  - external-mongo.example.com
+  ports:
+  - number: 27017
+    name: mongodb
+    protocol: MONGO
+  location: MESH_EXTERNAL
+  resolution: DNS
+
+---
+# PeerAuthentication for mTLS
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: websocket-peer-auth
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: websocket-server
+  mtls:
+    mode: STRICT
+
+---
+# AuthorizationPolicy for WebSocket access control
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: websocket-authz
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: websocket-server
+  rules:
+  # Allow health checks
+  - to:
+    - operation:
+        methods: ["GET"]
+        paths: ["/health"]
+  # Allow WebSocket connections (인증 없이 허용)
+  - to:
+    - operation:
+        methods: ["GET"]
+        paths: ["/ws"]
+  # Allow API access with JWT
+  - to:
+    - operation:
+        methods: ["GET", "POST"]
+        paths: ["/rooms", "/chat/*"]
+    when:
+    - key: request.auth.claims[iss]
+      values: ["https://auth.signite.com"]
+  # Allow internal service communication
+  - from:
+    - source:
+        namespaces: ["websocket", "signight", "istio-system"] 

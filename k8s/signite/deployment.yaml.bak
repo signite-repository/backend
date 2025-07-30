@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: signite-backend
-        image: signite-backend:latest
+        image: signite:v2.7
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
@@ -31,8 +31,6 @@ spec:
             secretKeyRef:
               name: mariadb-secret
               key: mariadb-root-password
-        - name: SPRING_DATASOURCE_URL
-          value: "r2dbc:mariadb://mariadb:3306/signite"
         - name: SPRING_REDIS_HOST
           value: "redis"
         - name: SPRING_REDIS_PORT

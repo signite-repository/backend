@@ -26,6 +26,19 @@ function show_help() {
     echo "  deploy      - Deploy backend to K8s"
     echo "  dev         - Start development mode (logs + port-forward)"
     echo
+    echo -e "${YELLOW}WebSocket Commands:${NC}"
+    echo "  ws-build    - Build WebSocket server"
+    echo "  ws-docker   - Build WebSocket Docker image"
+    echo "  ws-deploy   - Deploy WebSocket server to K8s"
+    echo "  ws-dev      - Start WebSocket development mode"
+    echo "  ws-logs     - View WebSocket server logs"
+    echo
+    echo -e "${YELLOW}Full Stack Commands:${NC}"
+    echo "  all-build   - Build both backend and WebSocket"
+    echo "  all-docker  - Build both Docker images"
+    echo "  all-deploy  - Deploy complete stack to K8s"
+    echo "  all-dev     - Start full development mode"
+    echo
     echo -e "${YELLOW}Infrastructure Commands:${NC}"
     echo "  setup       - Setup complete K8s environment"
     echo "  teardown    - Teardown K8s environment"
@@ -176,6 +189,124 @@ function show_version() {
     echo
 }
 
+# WebSocket Functions
+function websocket_build() {
+    echo -e "${YELLOW}🦀 Building WebSocket server...${NC}"
+    cd websocket
+    cargo build --release
+    cd ..
+}
+
+function websocket_docker() {
+    echo -e "${YELLOW}🐳 Building WebSocket Docker image...${NC}"
+    cd websocket
+    
+    # Auto-versioning
+    VERSION=$(date +%Y%m%d_%H%M%S)
+    IMAGE_NAME="signite-websocket"
+    
+    echo -e "${BLUE}Building ${IMAGE_NAME}:${VERSION}...${NC}"
+    docker build -t ${IMAGE_NAME}:${VERSION} .
+    docker tag ${IMAGE_NAME}:${VERSION} ${IMAGE_NAME}:latest
+    
+    # Load to minikube if available
+    if command -v minikube &> /dev/null; then
+        echo -e "${BLUE}Loading image to minikube...${NC}"
+        minikube image load ${IMAGE_NAME}:${VERSION}
+        minikube image load ${IMAGE_NAME}:latest
+    fi
+    
+    echo -e "${GREEN}✅ WebSocket image built: ${IMAGE_NAME}:${VERSION}${NC}"
+    cd ..
+}
+
+function websocket_deploy() {
+    echo -e "${YELLOW}🚀 Deploying WebSocket server to K8s...${NC}"
+    
+    # Apply K8s manifests
+    kubectl apply -f k8s/websocket/mongodb.yaml
+    kubectl apply -f k8s/websocket/redis.yaml
+    kubectl apply -f k8s/websocket/websocket-server.yaml
+    kubectl apply -f k8s/websocket/istio.yaml
+    
+    # Wait for deployment
+    echo -e "${BLUE}Waiting for WebSocket deployment...${NC}"
+    kubectl rollout status deployment/websocket-server -n default --timeout=300s
+    
+    echo -e "${GREEN}✅ WebSocket server deployed successfully${NC}"
+}
+
+function websocket_dev() {
+    echo -e "${YELLOW}🛠️  Starting WebSocket development mode...${NC}"
+    
+    # Start port-forward for WebSocket
+    echo -e "${BLUE}Setting up port forwarding...${NC}"
+    kubectl port-forward svc/websocket-service-nodeport 8080:8080 -n default &
+    kubectl port-forward svc/websocket-service-nodeport 3001:3001 -n default &
+    
+    # Show connection info
+    echo -e "${GREEN}🔗 WebSocket development URLs:${NC}"
+    echo "  WebSocket: ws://localhost:8080"
+    echo "  HTTP API:  http://localhost:3001"
+    echo "  Health:    http://localhost:3001/health"
+    echo
+    echo -e "${YELLOW}Press Ctrl+C to stop port forwarding${NC}"
+    
+    # Start log streaming
+    websocket_logs
+}
+
+function websocket_logs() {
+    echo -e "${YELLOW}📋 Viewing WebSocket server logs...${NC}"
+    kubectl logs -f deployment/websocket-server -n default
+}
+
+# Full Stack Functions
+function all_build() {
+    echo -e "${PURPLE}🔨 Building complete Signite stack...${NC}"
+    backend_build
+    websocket_build
+    echo -e "${GREEN}✅ All components built successfully${NC}"
+}
+
+function all_docker() {
+    echo -e "${PURPLE}🐳 Building all Docker images...${NC}"
+    backend_docker
+    websocket_docker
+    echo -e "${GREEN}✅ All Docker images built successfully${NC}"
+}
+
+function all_deploy() {
+    echo -e "${PURPLE}🚀 Deploying complete Signite stack...${NC}"
+    backend_deploy
+    websocket_deploy
+    echo -e "${GREEN}✅ Complete stack deployed successfully${NC}"
+}
+
+function all_dev() {
+    echo -e "${PURPLE}🛠️  Starting full development mode...${NC}"
+    
+    # Start backend dev mode in background
+    echo -e "${BLUE}Starting backend development mode...${NC}"
+    backend_dev &
+    BACKEND_PID=$!
+    
+    # Wait a bit for backend to start
+    sleep 5
+    
+    # Start websocket dev mode
+    echo -e "${BLUE}Starting WebSocket development mode...${NC}"
+    websocket_dev &
+    WEBSOCKET_PID=$!
+    
+    echo -e "${GREEN}🎉 Full development environment is running!${NC}"
+    echo -e "${YELLOW}Press Ctrl+C to stop all services${NC}"
+    
+    # Wait for user interrupt
+    trap "kill $BACKEND_PID $WEBSOCKET_PID 2>/dev/null; exit" INT
+    wait
+}
+
 # 메인 실행 로직
 case "${1:-help}" in
     "build")
@@ -192,6 +323,33 @@ case "${1:-help}" in
         ;;
     "dev")
         backend_dev
+        ;;
+    "ws-build")
+        websocket_build
+        ;;
+    "ws-docker")
+        websocket_docker
+        ;;
+    "ws-deploy")
+        websocket_deploy
+        ;;
+    "ws-dev")
+        websocket_dev
+        ;;
+    "ws-logs")
+        websocket_logs
+        ;;
+    "all-build")
+        all_build
+        ;;
+    "all-docker")
+        all_docker
+        ;;
+    "all-deploy")
+        all_deploy
+        ;;
+    "all-dev")
+        all_dev
         ;;
     "setup")
         setup_k8s
