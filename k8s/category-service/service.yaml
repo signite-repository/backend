@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: category-service-service # 서비스 이름은 고유해야 함
+  labels:
+    app: category-service
+spec:
+  selector:
+    app: category-service
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80 # 다른 서비스들이 이 포트를 통해 category-service에 접근
+    targetPort: 80
+  - name: grpc # gRPC 통신을 위한 포트 (필요 시)
+    protocol: TCP
+    port: 9090
+    targetPort: 9090
+  type: ClusterIP # 클러스터 내부 통신용

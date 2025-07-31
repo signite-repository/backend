@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: category-service-deployment
+  labels:
+    app: category-service
+spec:
+  replicas: 2 # 안정성을 위해 2개의 복제본으로 실행
+  selector:
+    matchLabels:
+      app: category-service
+  template:
+    metadata:
+      labels:
+        app: category-service
+      annotations:
+        sidecar.istio.io/inject: "true"
+    spec:
+      containers:
+      - name: category-service
+        # 실제 운영 환경에서는 이 이미지를 Docker Hub나 Harbor 같은 이미지 레지스트리에 푸시하고,
+        # 그 경로를 사용해야 합니다. (예: your-registry/category-service:v1)
+        image: nginxdemos/hello:0.3-plain-text
+        imagePullPolicy: IfNotPresent # 로컬에 이미지가 있으면 재사용
+        ports:
+        - containerPort: 80
+        env:
+          - name: SPRING_R2DBC_URL
+            value: "r2dbc:postgresql://category-db-service:5432/categorydb"
+          - name: SPRING_R2DBC_USERNAME
+            value: "user"
+          - name: SPRING_R2DBC_PASSWORD
+            value: "password"
+        # 애플리케이션이 정상적으로 실행되었는지 확인하기 위한 Readiness Probe
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 20 # Pod 시작 후 20초 뒤에 첫 Probe 시작
+          periodSeconds: 15       # 15초 간격으로 확인
+          failureThreshold: 3
+        # 애플리케이션이 살아있는지 확인하기 위한 Liveness Probe
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 45 # Readiness가 성공할 시간을 충분히 준 뒤 시작
+          periodSeconds: 20

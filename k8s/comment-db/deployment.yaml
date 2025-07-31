@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: comment-db-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: comment-db
+  template:
+    metadata:
+      labels:
+        app: comment-db
+    spec:
+      containers:
+      - name: comment-db
+        image: mongo:6.0
+        ports:
+        - containerPort: 27017
+        env:
+        # MongoDB는 사용자 인증을 위해 별도의 초기화 스크립트가 필요합니다.
+        # 여기서는 단순화를 위해 인증 없이 진행하지만, 운영 환경에서는 반드시 Secret과 함께 인증을 활성화해야 합니다.
+        - name: MONGO_INITDB_ROOT_USERNAME
+          value: "root"
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          value: "password"
+        volumeMounts:
+        - name: mongo-storage
+          mountPath: /data/db
+      volumes:
+      - name: mongo-storage
+        persistentVolumeClaim:
+          claimName: comment-db-pvc

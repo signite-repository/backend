@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: category-db-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce # 단일 노드에서만 마운트 가능
+  resources:
+    requests:
+      storage: 5Gi # 5GB의 저장 공간 요청

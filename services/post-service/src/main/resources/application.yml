@@ -1,0 +1,23 @@
+# Post Service 설정 파일
+# deployment.yaml의 환경 변수를 통해 실제 값이 오버라이드됩니다.
+
+# Spring Data MongoDB 설정
+spring:
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/postdb}
+  elasticsearch:
+    uris: ${SPRING_ELASTICSEARCH_URIS:http://localhost:9200}
+
+# gRPC 클라이언트 설정
+grpc:
+  client:
+    category-service:
+      address: ${grpc.client.category-service.address:static://localhost:9090}
+      negotiation-type: ${grpc.client.category-service.negotiation-type:plaintext}
+
+# 로깅 설정
+logging:
+  level:
+    com.signite.postservice: DEBUG
+    org.springframework.data.mongodb: DEBUG

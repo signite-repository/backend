@@ -31,7 +31,7 @@ async fn 웹소켓_클라이언트_연결_테스트() {
         if let Some(msg) = read.next().await {
             let msg = msg.expect("메시지 수신 실패");
             if let Message::Text(text) = msg {
-                println!("서버 응답: {}", text);
+                // println!("서버 응답: {}", text); // 테스트 출력 제거
                 // 응답 메시지 형식 검증
                 assert!(!text.is_empty());
             }

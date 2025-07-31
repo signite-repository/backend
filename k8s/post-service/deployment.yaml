@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: post-service-deployment
+  labels:
+    app: post-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: post-service
+  template:
+    metadata:
+      labels:
+        app: post-service
+      annotations:
+        sidecar.istio.io/inject: "true"
+    spec:
+      containers:
+      - name: post-service
+        image: nginxdemos/hello:0.3-plain-text
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        env:
+          # Spring Boot 프로퍼티 형식에 맞는 환경 변수 이름을 사용합니다.
+          - name: SPRING_DATA_MONGODB_URI
+            value: "mongodb://root:password@post-db-service:27017/postdb"
+          - name: SPRING_ELASTICSEARCH_URIS
+            value: "http://post-search-service:9200"
+          - name: grpc.client.category-service.address
+            value: "static://category-service-service:9090"
+          - name: grpc.client.category-service.negotiation-type
+            value: "plaintext"
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 15
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 45
+          periodSeconds: 20

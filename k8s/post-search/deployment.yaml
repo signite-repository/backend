@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: post-search-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: post-search
+  template:
+    metadata:
+      labels:
+        app: post-search
+      annotations:
+        sidecar.istio.io/inject: "true"
+    spec:
+      containers:
+      - name: post-search
+        image: elasticsearch:8.11.3 # 특정 버전을 명시하는 것이 좋습니다.
+        ports:
+        - containerPort: 9200
+        - containerPort: 9300
+        env:
+        # 단일 노드 모드로 실행하고, 보안(X-Pack)은 비활성화합니다. (개발용)
+        - name: "discovery.type"
+          value: "single-node"
+        - name: "xpack.security.enabled"
+          value: "false"
+        - name: "ES_JAVA_OPTS"
+          value: "-Xms512m -Xmx512m" # 메모리 힙 사이즈 설정
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "0.5"
+          limits:
+            memory: "2Gi"
+            cpu: "1"
+        volumeMounts:
+        - name: es-data
+          mountPath: /usr/share/elasticsearch/data
+      volumes:
+      - name: es-data
+        persistentVolumeClaim:
+          claimName: post-search-pvc

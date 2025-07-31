@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: category-mock-deployment
+  labels:
+    app: category-mock
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: category-mock
+  template:
+    metadata:
+      labels:
+        app: category-mock
+    spec:
+      containers:
+      - name: category-mock
+        image: hashicorp/http-echo:latest
+        args:
+          - -text={"categories":[{"id":1,"name":"기술","description":"기술 관련 포스트"},{"id":2,"name":"일상","description":"일상 이야기"},{"id":3,"name":"여행","description":"여행 후기"}],"total":3,"status":"success"}
+        ports:
+        - containerPort: 5678
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: category-mock-service
+  labels:
+    app: category-mock
+spec:
+  selector:
+    app: category-mock
+  ports:
+  - port: 80
+    targetPort: 5678
+    protocol: TCP
+  type: ClusterIP

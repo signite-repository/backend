@@ -1,0 +1,27 @@
+// `proto` 파일은 Protocol Buffers 버전 3 문법을 사용합니다.
+syntax = "proto3";
+
+// 생성될 Java/Kotlin 코드의 패키지 경로를 지정합니다.
+package com.signite.proto.category;
+
+option java_package = "com.signite.proto.category";
+option java_multiple_files = true;
+
+// Category Service가 제공하는 기능들을 정의합니다.
+service CategoryService {
+  // 사용자의 특정 행동에 대한 권한을 확인하는 RPC(Remote Procedure Call)
+  rpc CheckPermission (CheckPermissionRequest) returns (CheckPermissionResponse);
+}
+
+// CheckPermission을 요청할 때 보내는 데이터 형식
+message CheckPermissionRequest {
+  repeated string user_roles = 1; // JWT에서 추출한 사용자 역할 목록 (예: ["MEMBER", "SIG_LEADER"])
+  string category_id = 2;         // 작업이 일어나는 카테고리의 UUID
+  string permission = 3;          // 필요한 권한 이름 (예: "can_create_post")
+}
+
+// CheckPermission 요청에 대한 응답 데이터 형식
+message CheckPermissionResponse {
+  bool granted = 1;               // 권한 부여 여부 (true/false)
+  string reason = 2;              // (선택적) 권한이 거부된 경우, 그 사유
+}
