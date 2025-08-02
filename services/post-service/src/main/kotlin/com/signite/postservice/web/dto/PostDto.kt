@@ -11,7 +11,7 @@ data class PostRequest(
 )
 
 data class PostResponse(
-    val id: String?,
+    val id: Long?,
     val title: String,
     val content: String,
     val authorId: String,
@@ -22,13 +22,23 @@ data class PostResponse(
 ) {
     companion object {
         fun fromEntity(post: Post): PostResponse {
+            // JSON 문자열을 List<String>으로 파싱
+            val tagList = try {
+                post.tags.removeSurrounding("[", "]")
+                    .split(",")
+                    .map { it.trim().removeSurrounding("\"") }
+                    .filter { it.isNotBlank() }
+            } catch (e: Exception) {
+                emptyList<String>()
+            }
+            
             return PostResponse(
                 id = post.id,
                 title = post.title,
                 content = post.content,
                 authorId = post.authorId,
                 categoryId = post.categoryId,
-                tags = post.tags,
+                tags = tagList,
                 createdAt = post.createdAt,
                 updatedAt = post.updatedAt
             )

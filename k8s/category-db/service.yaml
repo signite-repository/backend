@@ -7,6 +7,6 @@ spec:
     app: category-db
   ports:
     - protocol: TCP
-      port: 5432
-      targetPort: 5432
+      port: 27017
+      targetPort: 27017
   type: ClusterIP # 클러스터 내부에서만 접근 가능

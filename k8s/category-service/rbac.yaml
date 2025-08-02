@@ -1,0 +1,151 @@
+# ServiceAccount for Category Service
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: category-service-sa
+  namespace: default
+  labels:
+    app: category-service
+automountServiceAccountToken: true
+
+---
+# ClusterRole for Category Service
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: category-service-role
+rules:
+# Allow reading configmaps for configuration
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+# Allow reading secrets for database credentials
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list"]
+# Allow reading services for service discovery
+- apiGroups: [""]
+  resources: ["services", "endpoints"]
+  verbs: ["get", "list", "watch"]
+# Allow reading pods for health checks
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+
+---
+# ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: category-service-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: category-service-role
+subjects:
+- kind: ServiceAccount
+  name: category-service-sa
+  namespace: default
+
+---
+# Role for namespace-specific permissions
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: category-service-namespace-role
+  namespace: default
+rules:
+# Allow managing category-related resources
+- apiGroups: [""]
+  resources: ["configmaps"]
+  resourceNames: ["category-config"]
+  verbs: ["get", "update", "patch"]
+# Allow reading persistent volume claims
+- apiGroups: [""]
+  resources: ["persistentvolumeclaims"]
+  verbs: ["get", "list"]
+
+---
+# RoleBinding for namespace-specific permissions
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: category-service-namespace-binding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: category-service-namespace-role
+subjects:
+- kind: ServiceAccount
+  name: category-service-sa
+  namespace: default
+
+---
+# ServiceAccount for Post Service (to call Category Service)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: post-service
+  namespace: default
+  labels:
+    app: post-service
+automountServiceAccountToken: true
+
+---
+# Role for Admin users
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: category-admin
+rules:
+- apiGroups: [""]
+  resources: ["categories"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+---
+# Role for Read-only users
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: category-viewer
+rules:
+- apiGroups: [""]
+  resources: ["categories"]
+  verbs: ["get", "list", "watch"]
+
+---
+# Sample ClusterRoleBinding for admin group
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: category-admin-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: category-admin
+subjects:
+# Kubernetes users in 'admin' group
+- kind: Group
+  name: admin
+  apiGroup: rbac.authorization.k8s.io
+# Specific user example
+- kind: User
+  name: ydh2244
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Sample ClusterRoleBinding for viewer group
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: category-viewer-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: category-viewer
+subjects:
+# All authenticated users can view
+- kind: Group
+  name: system:authenticated
+  apiGroup: rbac.authorization.k8s.io

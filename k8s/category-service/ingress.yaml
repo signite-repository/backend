@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: category-service-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    cert-manager.io/cluster-issuer: "selfsigned-issuer"
+spec:
+  tls:
+  - hosts:
+    - category.local
+    secretName: category-tls-secret
+  rules:
+  - host: category.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: category-service-service
+            port:
+              number: 80

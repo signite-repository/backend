@@ -1,0 +1,221 @@
+# Istio Gateway for Category Service
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: category-gateway
+  namespace: default
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "category.signight.com"
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: category-tls-secret
+    hosts:
+    - "category.signight.com"
+
+---
+# VirtualService for Category Service routing
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: category-vs
+  namespace: default
+spec:
+  hosts:
+  - "category.signight.com"
+  gateways:
+  - category-gateway
+  http:
+  # Health check endpoints (no auth required)
+  - match:
+    - uri:
+        prefix: "/actuator/health"
+    route:
+    - destination:
+        host: category-service-service
+        port:
+          number: 80
+  # Prometheus metrics endpoint (internal only)
+  - match:
+    - uri:
+        prefix: "/actuator/prometheus"
+    route:
+    - destination:
+        host: category-service-service
+        port:
+          number: 80
+  # Category API endpoints
+  - match:
+    - uri:
+        prefix: "/api/v1/categories"
+    route:
+    - destination:
+        host: category-service-service
+        port:
+          number: 80
+    timeout: 30s
+  # gRPC endpoints
+  - match:
+    - uri:
+        prefix: "/grpc"
+    route:
+    - destination:
+        host: category-service-service
+        port:
+          number: 9090
+  # Redirect HTTP to HTTPS
+  - match:
+    - uri:
+        prefix: "/"
+      headers:
+        ":scheme":
+          exact: "http"
+    redirect:
+      scheme: "https"
+      redirectCode: 301
+
+---
+# DestinationRule for load balancing
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: category-dr
+  namespace: default
+spec:
+  host: category-service-service
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN
+    connectionPool:
+      tcp:
+        maxConnections: 50
+      http:
+        http1MaxPendingRequests: 100
+        maxRequestsPerConnection: 5
+    outlierDetection:
+      consecutiveErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+
+---
+# PeerAuthentication for mTLS
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: category-peer-auth
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: category-service
+  mtls:
+    mode: STRICT
+
+---
+# RequestAuthentication for JWT validation
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: category-jwt-auth
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: category-service
+  jwtRules:
+  - issuer: "https://kubernetes.default.svc.cluster.local"
+    jwksUri: "https://kubernetes.default.svc.cluster.local/openid/v1/jwks"
+    audiences:
+    - "category-service"
+    forwardOriginalToken: true
+
+---
+# AuthorizationPolicy for RBAC
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: category-authz
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: category-service
+  rules:
+  # Allow health checks without authentication
+  - to:
+    - operation:
+        methods: ["GET"]
+        paths: ["/actuator/health", "/actuator/health/*"]
+  
+  # Allow Prometheus metrics from monitoring namespace only
+  - to:
+    - operation:
+        methods: ["GET"]
+        paths: ["/actuator/prometheus"]
+    from:
+    - source:
+        namespaces: ["monitoring", "istio-system"]
+  
+  # Allow GET operations (list/read categories) for all authenticated users
+  - to:
+    - operation:
+        methods: ["GET"]
+        paths: ["/api/v1/categories", "/api/v1/categories/*"]
+    when:
+    - key: request.auth.claims[sub]
+      notValues: [""]
+  
+  # Allow POST/PUT/DELETE operations only for admin role
+  - to:
+    - operation:
+        methods: ["POST", "PUT", "DELETE", "PATCH"]
+        paths: ["/api/v1/categories", "/api/v1/categories/*"]
+    when:
+    - key: request.auth.claims[groups]
+      values: ["admin", "category-admin"]
+  
+  # Allow gRPC calls from internal services
+  - to:
+    - operation:
+        methods: ["POST"]
+        paths: ["/grpc/*"]
+    from:
+    - source:
+        principals: ["cluster.local/ns/default/sa/post-service"]
+    - source:
+        namespaces: ["default"]
+  
+  # Allow internal service communication
+  - from:
+    - source:
+        namespaces: ["default", "istio-system"]
+
+---
+# ServiceMonitor for Prometheus (if using Prometheus Operator)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: category-service-monitor
+  namespace: default
+  labels:
+    app: category-service
+spec:
+  selector:
+    matchLabels:
+      app: category-service
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /actuator/prometheus

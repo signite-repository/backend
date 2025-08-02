@@ -18,14 +18,14 @@ spec:
     spec:
       containers:
       - name: post-service
-        image: nginxdemos/hello:0.3-plain-text
-        imagePullPolicy: IfNotPresent
+        image: signite/post-service:latest
+        imagePullPolicy: Never
         ports:
-        - containerPort: 80
+        - containerPort: 8080
         env:
           # Spring Boot 프로퍼티 형식에 맞는 환경 변수 이름을 사용합니다.
           - name: SPRING_DATA_MONGODB_URI
-            value: "mongodb://root:password@post-db-service:27017/postdb"
+            value: "mongodb://root:password@post-db-service:27017/postdb?authSource=admin"
           - name: SPRING_ELASTICSEARCH_URIS
             value: "http://post-search-service:9200"
           - name: grpc.client.category-service.address
@@ -34,13 +34,14 @@ spec:
             value: "plaintext"
         readinessProbe:
           httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 20
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 30
           periodSeconds: 15
+          failureThreshold: 3
         livenessProbe:
           httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 45
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 60
           periodSeconds: 20

@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb-exporter
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb-exporter
+  template:
+    metadata:
+      labels:
+        app: mongodb-exporter
+    spec:
+      containers:
+      - name: mongodb-exporter
+        image: percona/mongodb_exporter:0.40.0
+        ports:
+        - containerPort: 9216
+        env:
+        - name: MONGODB_URI
+          value: "mongodb://ydh2244:1127star@category-db-service.default.svc.cluster.local:27017/categorydb?authSource=admin"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-exporter
+  namespace: monitoring
+spec:
+  selector:
+    app: mongodb-exporter
+  ports:
+    - port: 9216
+      targetPort: 9216

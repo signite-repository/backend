@@ -1,0 +1,134 @@
+# Configuration for Kubernetes native authentication integration with Istio
+# This enables using Kubernetes ServiceAccount tokens as JWT for authentication
+
+---
+# RequestAuthentication - Validate Kubernetes ServiceAccount tokens
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: kubernetes-authn
+  namespace: istio-system
+spec:
+  jwtRules:
+  - issuer: "https://kubernetes.default.svc.cluster.local"
+    jwksUri: "https://kubernetes.default.svc.cluster.local/openid/v1/jwks"
+    audiences:
+    - "https://kubernetes.default.svc.cluster.local"
+    forwardOriginalToken: true
+
+---
+# AuthorizationPolicy - Map Kubernetes RBAC to Istio policies
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: k8s-rbac-mapping
+  namespace: istio-system
+spec:
+  rules:
+  # Allow all traffic with valid Kubernetes tokens
+  - when:
+    - key: request.auth.claims[iss]
+      values: ["https://kubernetes.default.svc.cluster.local"]
+  # Map Kubernetes groups to authorization
+  - when:
+    - key: request.auth.claims[kubernetes.io/serviceaccount/namespace]
+      values: ["default", "signight"]
+
+---
+# Enable automatic sidecar injection for the namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: default
+  labels:
+    istio-injection: enabled
+
+---
+# Sample: Create token for testing
+# kubectl create token category-service-sa --duration=1h
+
+---
+# ConfigMap for mapping Kubernetes users/groups to application roles
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k8s-auth-mapping
+  namespace: istio-system
+data:
+  role-mapping.yaml: |
+    mappings:
+      # Kubernetes groups to application roles
+      groups:
+        system:masters: admin
+        category-admins: category-admin
+        developers: viewer
+      # Kubernetes users to application roles  
+      users:
+        ydh2244: admin
+        admin: admin
+      # ServiceAccount to roles
+      serviceAccounts:
+        default/category-service-sa: service
+        default/post-service: service
+
+---
+# EnvoyFilter to extract user info from JWT
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: jwt-user-extraction
+  namespace: istio-system
+spec:
+  configPatches:
+  - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        filterChain:
+          filter:
+            name: envoy.filters.network.http_connection_manager
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: envoy.filters.http.jwt_authn
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
+          providers:
+            k8s_jwt:
+              issuer: https://kubernetes.default.svc.cluster.local
+              remote_jwks:
+                http_uri:
+                  uri: https://kubernetes.default.svc.cluster.local/openid/v1/jwks
+                  cluster: outbound|443||kubernetes.default.svc.cluster.local
+                  timeout: 5s
+              forward_payload_header: x-jwt-payload
+              payload_in_metadata: jwt_payload
+          rules:
+          - match:
+              prefix: /
+            requires:
+              provider_name: k8s_jwt
+
+---
+# Telemetry configuration to log authentication info
+apiVersion: telemetry.istio.io/v1alpha1
+kind: Telemetry
+metadata:
+  name: auth-logging
+  namespace: istio-system
+spec:
+  accessLogging:
+  - providers:
+    - name: otel
+    - name: default
+    disabled: false
+    filter:
+      expression: 'response.code >= 400'
+    # Log JWT claims
+    accessLog:
+      - name: user
+        value: |
+          request.auth.claims["sub"] | "anonymous"
+      - name: groups
+        value: |
+          request.auth.claims["groups"] | "none"

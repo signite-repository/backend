@@ -1,21 +1,15 @@
-# 
-# IDE
+
 .vscode/
 .idea/
 *.iml
 *.iws
 
-# OS
 .DS_Store
 Thumbs.db
 
-# Logs
 *.log
-
-# Docker
 .dockerignore
 
-# 🔒 SECURITY: Environment & Secrets
 *.env
 .env*
 **/secrets/
@@ -29,17 +23,14 @@ Thumbs.db
 *.p12
 *.keystore
 
-# 🔒 SECURITY: Kubernetes secrets
 k8s/**/secret.yaml
 k8s/**/secrets/
 k8s/**/*secret*
 
-# 🔒 SECURITY: Application configs with sensitive data
 **/application-prod.yml
 **/application-production.yml
 **/application-local.yml
 
-# Temporary files
 *.tmp
 *.swp
 *.swo
@@ -48,3 +39,4 @@ k8s/**/*secret*
 **/target/
 **/dist/
 **/out/
+gradlew

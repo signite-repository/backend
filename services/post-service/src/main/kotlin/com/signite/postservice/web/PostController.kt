@@ -29,7 +29,7 @@ class PostController(private val postService: PostService) {
     }
 
     @GetMapping("/{id}")
-    fun getPost(@PathVariable id: String): Mono<ResponseEntity<PostResponse>> {
+    fun getPost(@PathVariable id: Long): Mono<ResponseEntity<PostResponse>> {
         return postService.getPostById(id)
             .map { post -> ResponseEntity.ok(PostResponse.fromEntity(post)) }
             .defaultIfEmpty(ResponseEntity.notFound().build())

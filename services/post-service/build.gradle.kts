@@ -28,10 +28,11 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
 
-    // Database - MongoDB (Reactive)
-    implementation("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
+    // Database - MariaDB (Reactive)
+    implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
+    implementation("org.mariadb:r2dbc-mariadb")
 
-    // Search - Elasticsearch (Reactive)
+    // Search - Elasticsearch (Reactive) - 선택적
     implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
     
     // gRPC Client
@@ -39,6 +40,7 @@ dependencies {
     implementation("io.grpc:grpc-netty-shaded:1.62.2")
     implementation("io.grpc:grpc-protobuf:1.62.2")
     implementation("io.grpc:grpc-stub:1.62.2")
+    implementation("javax.annotation:javax.annotation-api:1.3.2")
 
     // Kotlin
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -59,17 +61,13 @@ protobuf {
     protoc { artifact = "com.google.protobuf:protoc:3.25.1" }
     plugins {
         id("grpc") { artifact = "io.grpc:protoc-gen-grpc-java:1.62.2" }
-        id("grpckt") { artifact = "io.grpc:protoc-gen-grpc-kotlin:1.4.1" }
     }
     generateProtoTasks {
         ofSourceSet("main").forEach {
             it.plugins {
                 id("grpc") {}
-                id("grpckt") {}
             }
-            it.builtins {
-                id("kotlin") {}
-            }
+
         }
     }
 }

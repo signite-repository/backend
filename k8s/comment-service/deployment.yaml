@@ -18,10 +18,10 @@ spec:
     spec:
       containers:
       - name: comment-service
-        image: nginxdemos/hello:0.3-plain-text
-        imagePullPolicy: IfNotPresent
+        image: signite/comment-service:latest
+        imagePullPolicy: Never
         ports:
-        - containerPort: 80
+        - containerPort: 8080
         env:
           - name: APP_DATABASE__URI
             value: "mongodb://root:password@comment-db-service:27017"
@@ -29,14 +29,14 @@ spec:
             value: "commentdb"
         readinessProbe:
           httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 5
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
           periodSeconds: 10
           failureThreshold: 3
         livenessProbe:
           httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 10
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
           periodSeconds: 20

@@ -1,11 +1,16 @@
 # Post Service 설정 파일
 # deployment.yaml의 환경 변수를 통해 실제 값이 오버라이드됩니다.
 
-# Spring Data MongoDB 설정
+# Spring Data R2DBC (MariaDB) 설정
 spring:
-  data:
-    mongodb:
-      uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/postdb}
+  r2dbc:
+    url: r2dbc:mariadb://localhost:3307/signite
+    username: user
+    password: password
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
   elasticsearch:
     uris: ${SPRING_ELASTICSEARCH_URIS:http://localhost:9200}
 

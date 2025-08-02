@@ -1,37 +1,36 @@
 package com.signite.categoryservice.service
 
+import com.signite.categoryservice.domain.Category
+import com.signite.categoryservice.repository.CategoryRepository
 import com.signite.categoryservice.web.rest.dto.CategoryResponse
-import org.springframework.r2dbc.core.DatabaseClient
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate
+import org.springframework.data.mongodb.core.query.Criteria
+import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import java.util.*
 
 @Service
 class CategoryService(
-    private val databaseClient: DatabaseClient
+    private val categoryRepository: CategoryRepository,
+    private val mongoTemplate: ReactiveMongoTemplate
 ) {
 
     fun getAllCategoriesAsTree(): Flux<CategoryResponse> {
-        return databaseClient.sql("""
-            SELECT id, name, slug, parent_id, path, level, display_order, metadata, created_at
-            FROM categories 
-            ORDER BY display_order
-        """)
-            .map { row ->
+        return categoryRepository.findAll()
+            .map { category ->
                 CategoryResponse(
-                    id = row.get("id", UUID::class.java)!!,
-                    name = row.get("name", String::class.java)!!,
-                    slug = row.get("slug", String::class.java)!!,
-                    parentId = row.get("parent_id", UUID::class.java),
-                    path = row.get("path", String::class.java)!!,
-                    level = row.get("level", Integer::class.java)!!.toInt(),
-                    displayOrder = row.get("display_order", Integer::class.java)!!.toInt(),
-                    metadata = row.get("metadata", String::class.java),
+                    id = category.id!!,
+                    name = category.name,
+                    slug = category.slug,
+                    parentId = category.parentId,
+                    path = category.path,
+                    level = category.level,
+                    displayOrder = category.displayOrder,
+                    metadata = category.metadata,
                     children = emptyList()
                 )
             }
-            .all()
             .collectList()
             .flatMapMany { categories ->
                 val categoryMap = categories.associateBy { it.id }
@@ -41,29 +40,23 @@ class CategoryService(
     }
 
     fun getCategoryBySlug(slug: String): Mono<CategoryResponse> {
-        return databaseClient.sql("""
-            SELECT id, name, slug, parent_id, path, level, display_order, metadata, created_at
-            FROM categories 
-            WHERE slug = :slug
-        """)
-            .bind("slug", slug)
-            .map { row ->
+        return categoryRepository.findBySlug(slug)
+            .map { category ->
                 CategoryResponse(
-                    id = row.get("id", UUID::class.java)!!,
-                    name = row.get("name", String::class.java)!!,
-                    slug = row.get("slug", String::class.java)!!,
-                    parentId = row.get("parent_id", UUID::class.java),
-                    path = row.get("path", String::class.java)!!,
-                    level = row.get("level", Integer::class.java)!!.toInt(),
-                    displayOrder = row.get("display_order", Integer::class.java)!!.toInt(),
-                    metadata = row.get("metadata", String::class.java),
+                    id = category.id!!,
+                    name = category.name,
+                    slug = category.slug,
+                    parentId = category.parentId,
+                    path = category.path,
+                    level = category.level,
+                    displayOrder = category.displayOrder,
+                    metadata = category.metadata,
                     children = emptyList()
                 )
             }
-            .one()
     }
 
-    private fun buildCategoryTree(category: CategoryResponse, categoryMap: Map<UUID, CategoryResponse>): CategoryResponse {
+    private fun buildCategoryTree(category: CategoryResponse, categoryMap: Map<String, CategoryResponse>): CategoryResponse {
         val children = categoryMap.values
             .filter { it.parentId == category.id }
             .sortedBy { it.displayOrder }

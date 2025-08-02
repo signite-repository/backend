@@ -5,7 +5,7 @@ metadata:
   labels:
     app: category-service
 spec:
-  replicas: 2 # 안정성을 위해 2개의 복제본으로 실행
+  replicas: 1 # 리소스 절약을 위해 1개로 축소
   selector:
     matchLabels:
       app: category-service
@@ -16,33 +16,54 @@ spec:
       annotations:
         sidecar.istio.io/inject: "true"
     spec:
+      serviceAccountName: category-service-sa
       containers:
       - name: category-service
-        # 실제 운영 환경에서는 이 이미지를 Docker Hub나 Harbor 같은 이미지 레지스트리에 푸시하고,
-        # 그 경로를 사용해야 합니다. (예: your-registry/category-service:v1)
-        image: nginxdemos/hello:0.3-plain-text
-        imagePullPolicy: IfNotPresent # 로컬에 이미지가 있으면 재사용
+        image: signite/category-service:latest
+        imagePullPolicy: Never # 로컬 빌드 이미지 사용
         ports:
-        - containerPort: 80
+        - containerPort: 8080
         env:
-          - name: SPRING_R2DBC_URL
-            value: "r2dbc:postgresql://category-db-service:5432/categorydb"
-          - name: SPRING_R2DBC_USERNAME
-            value: "user"
-          - name: SPRING_R2DBC_PASSWORD
-            value: "password"
+          - name: MONGO_URI
+            valueFrom:
+              secretKeyRef:
+                name: category-db-secret
+                key: uri
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
         # 애플리케이션이 정상적으로 실행되었는지 확인하기 위한 Readiness Probe
         readinessProbe:
           httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 20 # Pod 시작 후 20초 뒤에 첫 Probe 시작
-          periodSeconds: 15       # 15초 간격으로 확인
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 15
           failureThreshold: 3
         # 애플리케이션이 살아있는지 확인하기 위한 Liveness Probe
         livenessProbe:
           httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 45 # Readiness가 성공할 시간을 충분히 준 뒤 시작
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 60
           periodSeconds: 20

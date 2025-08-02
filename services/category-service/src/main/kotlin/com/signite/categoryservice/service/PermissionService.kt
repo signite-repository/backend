@@ -10,7 +10,7 @@ class PermissionService {
      */
     fun checkPermission(roles: List<String>, categoryId: String, requiredPermission: String): Mono<Boolean> {
         // 디버그용 로깅 - 향후 proper logger로 교체 예정
-        // println("Checking permission for roles: $roles on category: $categoryId for permission: $requiredPermission")
+        println("Category Service - Checking permission for roles: $roles on category: $categoryId for permission: $requiredPermission")
         return Mono.just(true) // 일단 항상 허용
     }
 }

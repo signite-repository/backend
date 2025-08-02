@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongodb-init-script
+data:
+  init-mongo.js: |
+    // MongoDB 초기화 스크립트
+    db = db.getSiblingDB('categorydb');
+    // 샘플 카테고리 데이터 생성
+    db.categories.insertMany([
+      {
+        name: "공지사항",
+        slug: "notice",
+        parentId: null,
+        path: "notice",
+        level: 0,
+        displayOrder: 1,
+        metadata: {
+          icon: "announcement",
+          color: "#FF5722"
+        }
+      },
+      {
+        name: "개발",
+        slug: "development",
+        parentId: null,
+        path: "development",
+        level: 0,
+        displayOrder: 2,
+        metadata: {
+          icon: "code",
+          color: "#2196F3"
+        }
+      },
+      {
+        name: "프론트엔드",
+        slug: "frontend",
+        parentId: "development",
+        path: "development/frontend",
+        level: 1,
+        displayOrder: 1,
+        metadata: {
+          icon: "web",
+          description: "웹 프론트엔드 개발 관련"
+        }
+      },
+      {
+        name: "백엔드",
+        slug: "backend",
+        parentId: "development",
+        path: "development/backend",
+        level: 1,
+        displayOrder: 2,
+        metadata: {
+          icon: "storage",
+          description: "서버 및 백엔드 개발 관련"
+        }
+      }
+    ]);
+    
+    // 인덱스 생성
+    db.categories.createIndex({ slug: 1 }, { unique: true });
+    db.categories.createIndex({ parentId: 1, displayOrder: 1 });
+    db.categories.createIndex({ path: 1 });
+    db.categories.createIndex({ level: 1 });

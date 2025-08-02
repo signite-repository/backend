@@ -23,33 +23,41 @@ class PostService(
                 if (!hasPermission) {
                     Mono.error(SecurityException("User has no permission to create a post in category ${request.categoryId}"))
                 } else {
-                    // 2. MongoDB에 Post 저장
+                    // 2. MariaDB에 Post 저장
                     val post = Post(
                         title = request.title,
                         content = request.content,
                         authorId = authorId,
                         categoryId = request.categoryId,
-                        tags = request.tags
+                        tags = request.tags.joinToString(",", "[", "]") { "\"$it\"" } // List<String> -> JSON String
                     )
                     postRepository.save(post)
                 }
             }
             .flatMap { savedPost ->
                 // 3. Elasticsearch에 PostDocument 저장 (데이터 동기화)
+                val tagList = try {
+                    savedPost.tags.removeSurrounding("[", "]")
+                        .split(",")
+                        .map { it.trim().removeSurrounding("\"") }
+                        .filter { it.isNotBlank() }
+                } catch (e: Exception) {
+                    emptyList<String>()
+                }
+                
                 val postDocument = PostDocument(
-                    id = savedPost.id!!,
+                    id = savedPost.id!!.toString(),
                     title = savedPost.title,
                     content = savedPost.content,
-                    tags = savedPost.tags
+                    tags = tagList
                 )
                 postSearchRepository.save(postDocument)
                     .thenReturn(savedPost) // Elasticsearch 저장 후 원래의 Post 객체를 반환
             }
     }
 
-    fun getPostById(id: String): Mono<Post> {
+    fun getPostById(id: Long): Mono<Post> {
         return postRepository.findById(id)
     }
 
-    // Update 및 Delete 로직은 향후 요구사항에 따라 추가 예정
 }

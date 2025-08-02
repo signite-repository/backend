@@ -1,10 +1,34 @@
 spring:
-  r2dbc:
-    url: r2dbc:postgresql://category-db-service:5432/categorydb
-    username: user
-    password: password
-  sql:
-    init:
-      mode: always
-      schema-locations: classpath:schema.sql
-      data-locations: classpath:data.sql
+  application:
+    name: category-service
+  data:
+    mongodb:
+      uri: ${MONGO_URI}
+      database: categorydb
+
+# gRPC 서버 설정
+grpc:
+  server:
+    port: 9090
+
+# 서버 포트 설정
+server:
+  port: 8080
+
+# Actuator 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: category-service

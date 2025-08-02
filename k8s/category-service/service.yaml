@@ -11,7 +11,7 @@ spec:
   - name: http
     protocol: TCP
     port: 80 # 다른 서비스들이 이 포트를 통해 category-service에 접근
-    targetPort: 80
+    targetPort: 8080
   - name: grpc # gRPC 통신을 위한 포트 (필요 시)
     protocol: TCP
     port: 9090

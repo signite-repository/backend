@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: auth-service
+  
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://ydh2244:1127star@category-db-service:27017/authdb?authSource=admin}
+      database: authdb
+  
+  redis:
+    host: ${REDIS_HOST:redis-service}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    
+server:
+  port: 8082
+
+# JWT 설정
+jwt:
+  secret: ${JWT_SECRET:signite-jwt-secret-key-2025}
+  access-token-expiration: ${JWT_ACCESS_EXPIRATION:3600000} # 1시간
+  refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7일
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,prometheus"
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+# 로깅
+logging:
+  level:
+    com.signite.authservice: DEBUG
+    org.springframework.security: DEBUG

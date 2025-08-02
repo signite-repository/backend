@@ -1,11 +1,12 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import com.google.protobuf.gradle.*
 
 plugins {
     id("org.springframework.boot") version "3.2.5"
     id("io.spring.dependency-management") version "1.1.4"
     kotlin("jvm") version "1.9.23"
     kotlin("plugin.spring") version "1.9.23"
-    // gRPC 제거하여 빌드 오류 해결
+    id("com.google.protobuf") version "0.9.4"
 }
 
 group = "com.signite"
@@ -29,9 +30,15 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
 
-    // Database - R2DBC for PostgreSQL
-    implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
-    implementation("org.postgresql:r2dbc-postgresql")
+    // Database - MongoDB Reactive
+    implementation("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
+
+    // gRPC Server
+    implementation("net.devh:grpc-server-spring-boot-starter:3.0.0.RELEASE")
+    implementation("io.grpc:grpc-netty-shaded:1.62.2")
+    implementation("io.grpc:grpc-protobuf:1.62.2")
+    implementation("io.grpc:grpc-stub:1.62.2")
+    implementation("javax.annotation:javax.annotation-api:1.3.2")
 
     // Kotlin
     implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -52,6 +59,46 @@ tasks.withType<KotlinCompile> {
     }
 }
 
+// Protobuf 플러그인 설정
+protobuf {
+    protoc { artifact = "com.google.protobuf:protoc:3.25.1" }
+    plugins {
+        id("grpc") { artifact = "io.grpc:protoc-gen-grpc-java:1.62.2" }
+    }
+    generateProtoTasks {
+        ofSourceSet("main").forEach {
+            it.plugins {
+                id("grpc") {}
+            }
+        }
+    }
+}
+
+sourceSets {
+    main {
+        proto {
+            srcDir("src/main/proto")
+        }
+    }
+}
+
+// 프로토 파일 중복 처리
+tasks.processResources {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+dependencies {
+    // Monitoring dependencies
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("io.micrometer:micrometer-registry-prometheus")
+    
+    // Test dependencies
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("io.projectreactor:reactor-test")
+    testImplementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo.spring30x:4.11.0")
+    testImplementation("io.mockk:mockk:1.13.8")
 }

@@ -1,30 +1,38 @@
 package com.signite.categoryservice.domain
 
 import org.springframework.data.annotation.Id
-import org.springframework.data.relational.core.mapping.Table
-import java.time.OffsetDateTime
-import java.util.UUID
+import org.springframework.data.mongodb.core.mapping.Document
+import org.springframework.data.mongodb.core.mapping.Field
+import java.time.LocalDateTime
 
-@Table("categories")
+@Document("categories")
 data class Category(
     @Id
-    val id: UUID? = null,
+    val id: String? = null,
 
+    @Field("name")
     var name: String,
 
+    @Field("slug")
     var slug: String,
 
-    var parentId: UUID?,
+    @Field("parentId")
+    var parentId: String?,
 
-    // LTREE 타입은 String으로 매핑하여 처리합니다.
+    // MongoDB에서 계층 경로 저장 (예: "notice", "notice/sub1")
+    @Field("path")
     var path: String,
 
+    @Field("level")
     var level: Int,
 
+    @Field("displayOrder")
     var displayOrder: Int,
 
-    // JSONB 타입은 String으로 받은 후, ObjectMapper 등으로 파싱하여 사용합니다.
-    var metadata: String? = "{}",
+    // MongoDB에서 Map으로 메타데이터 저장
+    @Field("metadata")
+    var metadata: Map<String, Any>? = emptyMap(),
 
-    val createdAt: OffsetDateTime? = null
+    @Field("createdAt")
+    val createdAt: LocalDateTime? = LocalDateTime.now()
 )

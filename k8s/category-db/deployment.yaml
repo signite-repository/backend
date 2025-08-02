@@ -14,62 +14,38 @@ spec:
     spec:
       containers:
       - name: category-db
-        image: postgres:15-alpine
+        image: mongo:7-jammy
         ports:
-        - containerPort: 5432
+        - containerPort: 27017
         env:
-        # Secret을 사용하는 것이 더 안전하지만, 여기서는 ConfigMap을 사용합니다.
-        - name: POSTGRES_DB
+        - name: MONGO_INITDB_ROOT_USERNAME
           valueFrom:
-            configMapKeyRef:
-              name: category-db-config
-              key: POSTGRES_DB
-        - name: POSTGRES_USER
+            secretKeyRef:
+              name: category-db-secret
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
           valueFrom:
-            configMapKeyRef:
-              name: category-db-config
-              key: POSTGRES_USER
-        - name: POSTGRES_PASSWORD
+            secretKeyRef:
+              name: category-db-secret
+              key: password
+        - name: MONGO_INITDB_DATABASE
           valueFrom:
-            configMapKeyRef:
-              name: category-db-config
-              key: POSTGRES_PASSWORD
+            secretKeyRef:
+              name: category-db-secret
+              key: database
         volumeMounts:
-        - name: postgres-storage
-          mountPath: /var/lib/postgresql/data
-        # /docker-entrypoint-initdb.d 디렉토리에 init-script ConfigMap을 마운트합니다.
-        - name: init-script
-          mountPath: /docker-entrypoint-initdb.d
+        - name: mongo-storage
+          mountPath: /data/db
       volumes:
-      - name: postgres-storage
+      - name: mongo-storage
         persistentVolumeClaim:
           claimName: category-db-pvc
-      # init-script ConfigMap을 볼륨으로 정의합니다.
-      - name: init-script
-        configMap:
-          name: category-db-init-script
-          # 실행 가능하도록 권한을 0755로 설정합니다.
-          defaultMode: 0755
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: category-db-config
 data:
-  POSTGRES_DB: "categorydb"
-  POSTGRES_USER: "user"
-  POSTGRES_PASSWORD: "password"
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: category-db-init-script
-data:
-  # init-db.sh 라는 이름의 파일을 생성하고 그 내용을 아래와 같이 정의합니다.
-  init-db.sh: |
-    #!/bin/bash
-    set -e
-    # psql을 사용하여 ltree 확장을 활성화하는 SQL 명령을 실행합니다.
-    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
-        CREATE EXTENSION IF NOT EXISTS ltree;
-    EOSQL
+  MONGO_USERNAME: "ydh2244"
+  MONGO_PASSWORD: "1127star@"
+  MONGO_DATABASE: "categorydb"
