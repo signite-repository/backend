@@ -47,8 +47,8 @@ class CommentService(
         return commentRepository.save(comment)
             .flatMap { savedComment ->
                 // path 업데이트 (자신의 ID를 path로 설정)
-                savedComment.path = savedComment.id.toString()
-                commentRepository.save(savedComment)
+                val updatedComment = savedComment.copy(path = savedComment.id.toString())
+                commentRepository.save(updatedComment)
             }
     }
     
@@ -74,8 +74,8 @@ class CommentService(
                     commentRepository.save(comment)
                         .flatMap { savedComment ->
                             // path 업데이트 (부모 path + 자신의 ID)
-                            savedComment.path = "${parentComment.path}/${savedComment.id}"
-                            commentRepository.save(savedComment)
+                            val updatedComment = savedComment.copy(path = "${parentComment.path}/${savedComment.id}")
+                            commentRepository.save(updatedComment)
                         }
                 }
             }
@@ -119,9 +119,11 @@ class CommentService(
                 } else if (comment.isDeleted) {
                     Mono.error<Comment>(RuntimeException("Cannot update deleted comment"))
                 } else {
-                    comment.content = request.content
-                    comment.updatedAt = LocalDateTime.now()
-                    commentRepository.save(comment)
+                    val updatedComment = comment.copy(
+                        content = request.content,
+                        updatedAt = LocalDateTime.now()
+                    )
+                    commentRepository.save(updatedComment)
                 }
             }
     }
@@ -139,9 +141,11 @@ class CommentService(
                         .flatMap { hasChildren ->
                             if (hasChildren) {
                                 // 대댓글이 있으면 소프트 삭제
-                                comment.isDeleted = true
-                                comment.updatedAt = LocalDateTime.now()
-                                commentRepository.save(comment).then()
+                                val deletedComment = comment.copy(
+                                    isDeleted = true,
+                                    updatedAt = LocalDateTime.now()
+                                )
+                                commentRepository.save(deletedComment).then()
                             } else {
                                 // 대댓글이 없으면 하드 삭제
                                 commentRepository.delete(comment)

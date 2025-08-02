@@ -24,7 +24,7 @@ spec:
         - containerPort: 8084
         env:
           - name: SPRING_R2DBC_URL
-            value: "r2dbc:mariadb://post-db-service:3306/postdb"
+            value: "r2dbc:mariadb://post-mariadb-service:3306/postdb"
           - name: SPRING_R2DBC_USERNAME
             value: "postuser"
           - name: SPRING_R2DBC_PASSWORD
@@ -43,7 +43,8 @@ spec:
             path: /actuator/health
             port: 8084
           initialDelaySeconds: 30
-          periodSeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 3
           failureThreshold: 3
         livenessProbe:
           httpGet:
@@ -51,3 +52,5 @@ spec:
             port: 8084
           initialDelaySeconds: 60
           periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3

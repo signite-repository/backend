@@ -11,10 +11,10 @@ data class PostDocument(
     @Id
     val id: String,
 
-    @Field(type = FieldType.Text, analyzer = "korean") // 한글 분석기 사용
+    @Field(type = FieldType.Text, analyzer = "standard") // 임시로 standard analyzer 사용
     val title: String,
 
-    @Field(type = FieldType.Text, analyzer = "korean")
+    @Field(type = FieldType.Text, analyzer = "standard")
     val content: String,
 
     @Field(type = FieldType.Keyword)

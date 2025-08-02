@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: post-mariadb-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: post-mariadb
+  template:
+    metadata:
+      labels:
+        app: post-mariadb
+    spec:
+      containers:
+      - name: mariadb
+        image: mariadb:10.11
+        ports:
+        - containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "rootpassword"
+        - name: MYSQL_DATABASE
+          value: "postdb"
+        - name: MYSQL_USER
+          value: "postuser"
+        - name: MYSQL_PASSWORD
+          value: "postpassword"
+        volumeMounts:
+        - name: mariadb-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mariadb-storage
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: post-mariadb-service
+spec:
+  selector:
+    app: post-mariadb
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+  type: ClusterIP
