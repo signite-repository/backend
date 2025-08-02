@@ -1,28 +1,29 @@
 # Post Service 설정 파일
 # deployment.yaml의 환경 변수를 통해 실제 값이 오버라이드됩니다.
 
-# Spring Data R2DBC (MariaDB) 설정
+server:
+  port: 8084
+
 spring:
+  application:
+    name: post-service
   r2dbc:
-    url: r2dbc:mariadb://localhost:3307/signite
-    username: user
-    password: password
+    url: ${SPRING_R2DBC_URL:r2dbc:mariadb://localhost:3307/signite}
+    username: ${SPRING_R2DBC_USERNAME:user}
+    password: ${SPRING_R2DBC_PASSWORD:password}
   sql:
     init:
       mode: always
       schema-locations: classpath:schema.sql
   elasticsearch:
     uris: ${SPRING_ELASTICSEARCH_URIS:http://localhost:9200}
-
-# gRPC 클라이언트 설정
-grpc:
-  client:
-    category-service:
-      address: ${grpc.client.category-service.address:static://localhost:9090}
-      negotiation-type: ${grpc.client.category-service.negotiation-type:plaintext}
+  webflux:
+    cors:
+      enabled: true
 
 # 로깅 설정
 logging:
   level:
     com.signite.postservice: DEBUG
-    org.springframework.data.mongodb: DEBUG
+    org.springframework.data.r2dbc: DEBUG
+    org.springframework.data.elasticsearch: DEBUG

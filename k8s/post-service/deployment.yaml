@@ -21,27 +21,33 @@ spec:
         image: signite/post-service:latest
         imagePullPolicy: Never
         ports:
-        - containerPort: 8080
+        - containerPort: 8084
         env:
-          # Spring Boot 프로퍼티 형식에 맞는 환경 변수 이름을 사용합니다.
-          - name: SPRING_DATA_MONGODB_URI
-            value: "mongodb://root:password@post-db-service:27017/postdb?authSource=admin"
+          - name: SPRING_R2DBC_URL
+            value: "r2dbc:mariadb://post-db-service:3306/postdb"
+          - name: SPRING_R2DBC_USERNAME
+            value: "postuser"
+          - name: SPRING_R2DBC_PASSWORD
+            value: "postpassword"
           - name: SPRING_ELASTICSEARCH_URIS
             value: "http://post-search-service:9200"
-          - name: grpc.client.category-service.address
-            value: "static://category-service-service:9090"
-          - name: grpc.client.category-service.negotiation-type
-            value: "plaintext"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
         readinessProbe:
           httpGet:
             path: /actuator/health
-            port: 8080
+            port: 8084
           initialDelaySeconds: 30
           periodSeconds: 15
           failureThreshold: 3
         livenessProbe:
           httpGet:
             path: /actuator/health
-            port: 8080
+            port: 8084
           initialDelaySeconds: 60
           periodSeconds: 20

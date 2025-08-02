@@ -1,12 +1,10 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import com.google.protobuf.gradle.*
 
 plugins {
     id("org.springframework.boot") version "3.2.5"
     id("io.spring.dependency-management") version "1.1.4"
     kotlin("jvm") version "1.9.23"
     kotlin("plugin.spring") version "1.9.23"
-    id("com.google.protobuf") version "0.9.4"
 }
 
 group = "com.signite"
@@ -35,12 +33,8 @@ dependencies {
     // Search - Elasticsearch (Reactive) - 선택적
     implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
     
-    // gRPC Client
-    implementation("net.devh:grpc-client-spring-boot-starter:3.0.0.RELEASE")
-    implementation("io.grpc:grpc-netty-shaded:1.62.2")
-    implementation("io.grpc:grpc-protobuf:1.62.2")
-    implementation("io.grpc:grpc-stub:1.62.2")
-    implementation("javax.annotation:javax.annotation-api:1.3.2")
+    // Validation
+    implementation("org.springframework.boot:spring-boot-starter-validation")
 
     // Kotlin
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -54,30 +48,6 @@ dependencies {
     // Testing
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.projectreactor:reactor-test")
-}
-
-// Protobuf 플러그인 설정 (category-service와 동일)
-protobuf {
-    protoc { artifact = "com.google.protobuf:protoc:3.25.1" }
-    plugins {
-        id("grpc") { artifact = "io.grpc:protoc-gen-grpc-java:1.62.2" }
-    }
-    generateProtoTasks {
-        ofSourceSet("main").forEach {
-            it.plugins {
-                id("grpc") {}
-            }
-
-        }
-    }
-}
-
-sourceSets {
-    main {
-        proto { srcDir("../../proto") }
-        java.srcDirs("build/generated/source/proto/main/grpc", "build/generated/source/proto/main/java")
-        kotlin.srcDirs("build/generated/source/proto/main/grpckt")
-    }
 }
 
 tasks.withType<KotlinCompile> {
