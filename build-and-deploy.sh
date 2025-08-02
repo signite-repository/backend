@@ -42,9 +42,10 @@ kubectl apply -f k8s/post-search/
 
 # 서비스 배포
 echo "서비스 배포 중..."
-kubectl apply -f k8s/category-service/
-kubectl apply -f k8s/post-service/
-kubectl apply -f k8s/comment-service/
+kubectl apply -f k8s/category/
+kubectl apply -f k8s/category/
+kubectl apply -f k8s/post/
+kubectl apply -f k8s/comment/
 kubectl apply -f k8s/websocket/
 
 # NATS 배포

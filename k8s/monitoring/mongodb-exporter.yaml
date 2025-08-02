@@ -20,7 +20,7 @@ spec:
         - containerPort: 9216
         env:
         - name: MONGODB_URI
-          value: "mongodb://ydh2244:1127star@category-db-service.default.svc.cluster.local:27017/categorydb?authSource=admin"
+          value: "mongodb://ydh2244:1127star@category-db.default.svc.cluster.local:27017/categorydb?authSource=admin"
         resources:
           requests:
             memory: "64Mi"

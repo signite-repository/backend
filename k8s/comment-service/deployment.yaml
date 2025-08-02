@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: comment-service-deployment
+  name: comment-service
   labels:
     app: comment-service
 spec:
@@ -24,7 +24,10 @@ spec:
         - containerPort: 8080
         env:
           - name: APP_DATABASE__URI
-            value: "mongodb://root:password@comment-db-service:27017"
+            valueFrom:
+              secretKeyRef:
+                name: comment-db-secret
+                key: MONGODB_URI
           - name: DATABASE_NAME
             value: "commentdb"
         readinessProbe:

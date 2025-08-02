@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: post-service-deployment
+  name: post-service
   labels:
     app: post-service
 spec:
@@ -24,13 +24,19 @@ spec:
         - containerPort: 8084
         env:
           - name: SPRING_R2DBC_URL
-            value: "r2dbc:mariadb://post-mariadb-service:3306/postdb"
+            value: "r2dbc:mariadb://post-db:3306/postdb"
           - name: SPRING_R2DBC_USERNAME
-            value: "postuser"
+            valueFrom:
+              secretKeyRef:
+                name: post-db-secret
+                key: MYSQL_USER
           - name: SPRING_R2DBC_PASSWORD
-            value: "postpassword"
+            valueFrom:
+              secretKeyRef:
+                name: post-db-secret
+                key: MYSQL_PASSWORD
           - name: SPRING_ELASTICSEARCH_URIS
-            value: "http://post-search-service:9200"
+            value: "http://post-search:9200"
         resources:
           requests:
             memory: "256Mi"

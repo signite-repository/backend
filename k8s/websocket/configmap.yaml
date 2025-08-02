@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: websocket-config
+data:
+  SERVER_HOST: "0.0.0.0"
+  SERVER_PORT: "8080"
+  HTTP_PORT: "3001"
+  MONGODB_DB_NAME: "signight_websocket"
+  JWT_ISSUER: "https://auth.signite.com"
+  ALLOWED_ORIGINS: "http://localhost:5174,https://signight.com"
+  RUST_LOG: "rust_websocket_server=info,info"

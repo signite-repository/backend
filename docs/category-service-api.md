@@ -1,159 +1,66 @@
-# Category Service API Documentation
+# ✅ Category Service API 현행화 가이드
 
-## Overview
-Category Service는 다중 깊이 트리 구조의 카테고리 관리를 제공하는 마이크로서비스입니다.
+## 1. 개요
 
-## 기술 스택
-- **Language**: Kotlin
-- **Framework**: Spring Boot 3.x, Spring WebFlux
-- **Database**: MongoDB
-- **Container**: Docker, Kubernetes
+- **담당 서비스**: `category-service`
+- **기술 스택**: Spring WebFlux, Kotlin, MongoDB
+- **주요 기능**: 계층형 카테고리 데이터를 관리하며, Tree 구조로 조회하는 API를 제공합니다.
 
-## API Endpoints
+## 2. API 엔드포인트
 
-### 1. 전체 카테고리 트리 조회
-```
-GET /api/v1/categories
-```
+Istio 게이트웨이를 통해 라우팅되며, 외부에서 호출하는 최종 엔드포인트 기준입니다.
 
-**Response**:
-```json
-[
+### **카테고리 전체 조회 (Tree 구조)**
+- `GET /api/categories`
+- **설명**: 모든 카테고리를 부모-자식 관계가 포함된 트리 구조로 조회합니다.
+- **인증**: 불필요
+- **응답 (200 OK)**:
+  ```json
+  [
+    {
+      "id": "1",
+      "name": "개발",
+      "slug": "development",
+      "children": [
+        {
+          "id": "2",
+          "name": "프론트엔드",
+          "slug": "frontend",
+          "children": []
+        }
+      ]
+    }
+  ]
+  ```
+
+### **특정 카테고리 조회**
+- `GET /api/categories/{id}`
+- **설명**: 지정된 `id`에 해당하는 카테고리 정보를 조회합니다.
+- **인증**: 불필요
+- **응답 (200 OK)**:
+  ```json
   {
     "id": "1",
     "name": "개발",
     "slug": "development",
     "parentId": null,
-    "path": "development",
-    "level": 0,
-    "displayOrder": 1,
-    "metadata": {
-      "icon": "code",
-      "color": "#2196F3"
-    },
-    "children": [
-      {
-        "id": "2",
-        "name": "프론트엔드",
-        "slug": "frontend",
-        "parentId": "1",
-        "path": "development/frontend",
-        "level": 1,
-        "displayOrder": 1,
-        "metadata": {},
-        "children": []
-      }
-    ]
+    "path": "development"
   }
-]
-```
+  ```
 
-### 2. 슬러그로 카테고리 조회
-```
-GET /api/v1/categories/slug/{slug}
-```
+## 3. 데이터 모델 (MongoDB)
 
-**Parameters**:
-- `slug`: 카테고리 슬러그 (예: "development")
+- **컬렉션 이름**: `categories`
+- **핵심 필드**:
+  - `name`: 카테고리 이름 (String)
+  - `slug`: URL 식별자 (String, Unique)
+  - `parentId`: 부모 ID (String, 최상위는 null)
+  - `path`: 전체 경로 (String, e.g., "dev/backend")
+  - `level`: 깊이 (Int)
+  - `metadata`: 아이콘, 색상 등 추가 정보 (Map)
 
-**Response**:
-```json
-{
-  "id": "1",
-  "name": "개발",
-  "slug": "development",
-  "parentId": null,
-  "path": "development",
-  "level": 0,
-  "displayOrder": 1,
-  "metadata": {
-    "icon": "code",
-    "color": "#2196F3"
-  }
-}
-```
+## 4. Kubernetes 주요 설정
 
-## 데이터 모델
-
-### Category Document
-```kotlin
-@Document("categories")
-data class Category(
-    @Id
-    val id: String? = null,
-    var name: String,
-    var slug: String,
-    var parentId: String?,
-    var path: String,
-    var level: Int,
-    var displayOrder: Int,
-    var metadata: Map<String, Any>? = emptyMap(),
-    val createdAt: LocalDateTime? = LocalDateTime.now()
-)
-```
-
-### 필드 설명
-- `id`: MongoDB ObjectId
-- `name`: 카테고리 표시 이름
-- `slug`: URL-friendly 고유 식별자
-- `parentId`: 부모 카테고리 ID (최상위 카테고리는 null)
-- `path`: 계층 경로 (예: "root/sub1/sub2")
-- `level`: 트리 깊이 (0부터 시작)
-- `displayOrder`: 같은 레벨에서의 표시 순서
-- `metadata`: 추가 정보를 저장하는 맵 (아이콘, 색상 등)
-
-## Kubernetes 구성
-
-### StatefulSet
-MongoDB는 StatefulSet으로 배포되어 영구 스토리지를 보장합니다.
-```yaml
-- PVC: 1Gi 스토리지
-- Health checks 구성
-- Resource limits 설정
-```
-
-### HorizontalPodAutoscaler
-Category Service는 HPA로 자동 스케일링됩니다.
-```yaml
-- Min replicas: 2
-- Max replicas: 10
-- CPU target: 70%
-- Memory target: 80%
-```
-
-### NetworkPolicy
-보안을 위해 네트워크 정책이 적용됩니다.
-- Category Service만 MongoDB에 접근 가능
-- 외부에서는 8080 포트로만 접근 가능
-
-## 환경 설정
-
-### MongoDB 연결
-```yaml
-spring:
-  data:
-    mongodb:
-      uri: ${MONGO_URI}
-      database: categorydb
-```
-
-### Health Checks
-- Liveness: `/actuator/health/liveness`
-- Readiness: `/actuator/health/readiness`
-
-## 테스트
-
-### Unit Tests
-- CategoryServiceTest
-- CategoryRepositoryTest
-- CategoryResourceTest
-
-### Test Coverage
-- Service layer: 비즈니스 로직 테스트
-- Repository layer: MongoDB 연동 테스트
-- Controller layer: API 엔드포인트 테스트
-
-## 보안
-- MongoDB 인증: Secret으로 관리
-- 네트워크 격리: NetworkPolicy 적용
-- Resource limits: 리소스 제한 설정
+- **데이터베이스**: MongoDB (`StatefulSet`으로 배포)
+- **네트워크 정책**: `category-service` 파드만 MongoDB에 접근 가능하도록 제한됩니다.
+- **헬스 체크**: `/actuator/health/liveness`, `/actuator/health/readiness`

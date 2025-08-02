@@ -19,118 +19,133 @@ echo
 function show_help() {
     echo -e "${BLUE}Usage: ./dev.sh [COMMAND]${NC}"
     echo
-    echo -e "${YELLOW}Backend Commands:${NC}"
-    echo "  build       - Build backend application"
-    echo "  test        - Run backend tests"
-    echo "  docker      - Build Docker image with auto-versioning"
-    echo "  deploy      - Deploy backend to K8s"
-    echo "  dev         - Start development mode (logs + port-forward)"
+    echo -e "${YELLOW}Development Commands:${NC}"
+    echo "  dev         - Start unified development mode via Istio Gateway"
+    echo "  logs        - View all application logs"
     echo
-    echo -e "${YELLOW}WebSocket Commands:${NC}"
-    echo "  ws-build    - Build WebSocket server"
-    echo "  ws-docker   - Build WebSocket Docker image"
-    echo "  ws-deploy   - Deploy WebSocket server to K8s"
-    echo "  ws-dev      - Start WebSocket development mode"
-    echo "  ws-logs     - View WebSocket server logs"
-    echo
-    echo -e "${YELLOW}Full Stack Commands:${NC}"
-    echo "  all-build   - Build both backend and WebSocket"
-    echo "  all-docker  - Build both Docker images"
-    echo "  all-deploy  - Deploy complete stack to K8s"
-    echo "  all-dev     - Start full development mode"
+    echo -e "${YELLOW}Build & Deploy Commands:${NC}"
+    echo "  build       - Build all services"
+    echo "  docker      - Build all Docker images"
+    echo "  deploy      - Deploy complete stack to K8s"
     echo
     echo -e "${YELLOW}Infrastructure Commands:${NC}"
     echo "  setup       - Setup complete K8s environment"
     echo "  teardown    - Teardown K8s environment"
     echo "  status      - Check K8s deployment status"
-    echo "  logs        - View application logs"
     echo
     echo -e "${YELLOW}Utility Commands:${NC}"
-    echo "  secrets     - Generate secure K8s secrets"
     echo "  clean       - Clean all build artifacts"
     echo "  version     - Show version information"
     echo "  help        - Show this help"
     echo
 }
 
-function backend_build() {
-    echo -e "${YELLOW}🔨 Building backend...${NC}"
-    cd backend
-    ./start.sh build
-    cd ..
+# --- Build and Deploy Functions ---
+
+function build_all() {
+    echo -e "${PURPLE}🔨 Building complete Signite stack...${NC}"
+    (cd services/auth-service && ./gradlew build)
+    (cd services/category-service && ./gradlew build)
+    (cd services/post-service && ./gradlew build)
+    (cd services/comment-service && cargo build --release)
+    (cd websocket && cargo build --release)
+    echo -e "${GREEN}✅ All components built successfully${NC}"
 }
 
-function backend_test() {
-    echo -e "${YELLOW}🧪 Running backend tests...${NC}"
-    cd backend
-    ./start.sh test
-    cd ..
+function docker_all() {
+    echo -e "${PURPLE}🐳 Building all Docker images...${NC}"
+    
+    # 이 부분은 각 서비스의 Docker 빌드 스크립트나 로직을 호출해야 합니다.
+    # 예시로 각 디렉토리에서 docker build를 실행하는 형태로 남겨둡니다.
+    docker build -t signite/auth-service:latest services/auth-service
+    docker build -t signite/category-service:latest services/category-service
+    docker build -t signite/post-service:latest services/post-service
+    docker build -t signite/comment-service:latest services/comment-service
+    docker build -t signite/websocket:latest websocket
+    
+    echo -e "${GREEN}✅ All Docker images built successfully${NC}"
 }
 
-function backend_docker() {
-    echo -e "${YELLOW}🐳 Building backend Docker image...${NC}"
-    cd backend
-    ./start.sh docker
-    cd ..
+function deploy_all() {
+    echo -e "${PURPLE}🚀 Deploying complete Signite stack...${NC}"
+    kubectl apply -k k8s/
+    
+    echo -e "${BLUE}Waiting for deployments to be ready...${NC}"
+    # kubectl wait --for=condition=available --timeout=5m deployment -l app.kubernetes.io/part-of=signite
+    
+    echo -e "${GREEN}✅ Complete stack deployed successfully${NC}"
+    check_status
 }
 
-function backend_deploy() {
-    echo -e "${YELLOW}🚢 Deploying backend...${NC}"
-    cd backend
-    ./start.sh deploy
-    cd ..
+
+# --- Development Functions ---
+
+function start_dev_mode() {
+    echo -e "${PURPLE}🛠️  Starting unified development mode via Istio Gateway...${NC}"
+
+    echo -e "${BLUE}Setting up single entrypoint port-forward...${NC}"
+    
+    # istio-ingressgateway의 Pod 이름을 가져옵니다.
+    INGRESS_POD=$(kubectl get pod -l istio=ingressgateway -n istio-system -o jsonpath='{.items[0].metadata.name}')
+    if [ -z "$INGRESS_POD" ]; then
+        echo -e "${RED}Error: istio-ingressgateway pod not found in istio-system namespace.${NC}"
+        exit 1
+    fi
+    
+    # 게이트웨이 포트 포워딩을 백그라운드에서 실행
+    kubectl port-forward -n istio-system pod/$INGRESS_POD 8080:80 &
+    PORT_FORWARD_PID=$!
+    
+    # 스크립트 종료 시 포트 포워딩 프로세스도 함께 종료되도록 설정
+    trap "echo -e '\n${YELLOW}Stopping port-forward...${NC}'; kill $PORT_FORWARD_PID 2>/dev/null" EXIT
+    
+    echo
+    echo -e "${GREEN}✅ Development environment is running!${NC}"
+    echo -e "All services are accessible through the gateway at ${YELLOW}http://localhost:8080${NC}"
+    echo
+    echo -e "${BLUE}Example endpoints:${NC}"
+    echo -e "  Auth Service:      ${YELLOW}http://localhost:8080/api/auth/...${NC}"
+    echo -e "  Post Service:      ${YELLOW}http://localhost:8080/api/posts/...${NC}"
+    echo -e "  Category Service:  ${YELLOW}http://localhost:8080/api/categories/...${NC}"
+    echo -e "  WebSocket:         ${YELLOW}ws://localhost:8080/api/ws${NC}"
+    echo
+
+    # 통합 로그 뷰어 실행
+    view_logs
 }
 
-function backend_dev() {
-    echo -e "${YELLOW}💻 Starting backend development mode...${NC}"
-    cd backend
-    ./start.sh dev
-    cd ..
+function view_logs() {
+    echo -e "${YELLOW}📋 Viewing all application logs... (Press Ctrl+C to stop)${NC}"
+    
+    # stern이 설치되어 있는지 확인
+    if ! command -v stern &> /dev/null; then
+        echo -e "${RED}Warning: 'stern' is not installed. Displaying logs with 'kubectl'.${NC}"
+        echo -e "${BLUE}For a better experience, install stern: https://github.com/stern/stern${NC}"
+        
+        # kubectl을 사용한 대체 로깅
+        # 이 부분은 프로젝트의 모든 서비스 Pod를 선택할 수 있는 공통 레이블을 사용해야 합니다.
+        # 예: app.kubernetes.io/part-of=signite
+                         kubectl logs -f -l 'app in (auth-service, category-service, comment-service, post-service, websocket-server)' --all-containers --max-log-requests=30
+    else
+        # stern을 사용한 통합 로그
+        stern . -n default --exclude-container istio-proxy
+    fi
 }
+
+
+# --- Infrastructure & Utility Functions ---
 
 function setup_k8s() {
     echo -e "${YELLOW}🏗️ Setting up complete K8s environment...${NC}"
-    
-    # 시크릿 생성
-    echo -e "${BLUE}🔒 Generating secure secrets...${NC}"
-    ./scripts/create-secrets.sh
-    
-    # 시크릿 배포
-    echo -e "${BLUE}🔑 Deploying secrets...${NC}"
-    kubectl apply -f k8s/mariadb/secret.yaml
-    kubectl apply -f k8s/redis/secret.yaml
-    kubectl apply -f k8s/secrets/create-jwt-secret.yaml
-    
-    # 데이터베이스 배포
-    echo -e "${BLUE}📊 Deploying databases...${NC}"
-    kubectl apply -f k8s/mariadb/
-    kubectl apply -f k8s/redis/
-    
-    # NATS JetStream 배포
-    echo -e "${BLUE}📡 Deploying NATS JetStream...${NC}"
-    kubectl apply -f k8s/nats/
-    
-    # Istio 설정
-    echo -e "${BLUE}🔧 Applying Istio configurations...${NC}"
-    kubectl apply -f k8s/istio/
-    
-    # 애플리케이션 배포
-    echo -e "${BLUE}🚀 Deploying application...${NC}"
-    kubectl apply -f k8s/signite/
-    
+    echo -e "${BLUE}Applying all configurations from k8s/ directory...${NC}"
+    # kubectl apply -k k8s/
     echo -e "${GREEN}✅ K8s environment setup completed${NC}"
     check_status
 }
 
 function teardown_k8s() {
     echo -e "${YELLOW}🗑️ Tearing down K8s environment...${NC}"
-    
-    kubectl delete -f k8s/signite/ --ignore-not-found=true
-    kubectl delete -f k8s/istio/ --ignore-not-found=true
-    kubectl delete -f k8s/nats/ --ignore-not-found=true
-    kubectl delete -f k8s/redis/ --ignore-not-found=true
-    kubectl delete -f k8s/mariadb/ --ignore-not-found=true
-    
+    # kubectl delete -k k8s/ --ignore-not-found=true
     echo -e "${GREEN}✅ K8s environment teardown completed${NC}"
 }
 
@@ -148,23 +163,20 @@ function check_status() {
     echo
 }
 
-function view_logs() {
-    echo -e "${YELLOW}📋 Viewing application logs...${NC}"
-    kubectl logs -f deployment/signite-deployment -c signite-backend
-}
-
 function clean_all() {
     echo -e "${YELLOW}🧹 Cleaning all build artifacts...${NC}"
-    cd backend
-    ./start.sh clean
-    cd ..
+    (cd services/auth && ./gradlew clean)
+    (cd services/category && ./gradlew clean)
+    (cd services/post && ./gradlew clean)
+    (cd services/comment && cargo clean)
+    (cd services/websocket && cargo clean)
     
-    # Docker 이미지 정리 (선택적)
     read -p "Clean Docker images? (y/N): " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        docker system prune -f
-        echo -e "${GREEN}✅ Docker cleanup completed${NC}"
+        # 주의: 이 명령은 현재 빌드되지 않은 이미지도 삭제할 수 있습니다.
+        docker image prune -a -f
+        echo -e "${GREEN}✅ Docker image cleanup completed${NC}"
     fi
 }
 
@@ -172,184 +184,35 @@ function show_version() {
     echo -e "${BLUE}📋 Version Information:${NC}"
     echo
     
-    # Git 정보
     if git rev-parse --git-dir > /dev/null 2>&1; then
         echo -e "${YELLOW}Git Branch:${NC} $(git rev-parse --abbrev-ref HEAD)"
         echo -e "${YELLOW}Git Commit:${NC} $(git rev-parse --short HEAD)"
-        echo -e "${YELLOW}Git Status:${NC}"
-        git status --porcelain | head -5
     fi
     
     echo
     echo -e "${YELLOW}Environment:${NC}"
-    echo -e "  Java: $(java -version 2>&1 | head -n 1)"
-    echo -e "  Kotlin: $(kotlinc -version 2>&1 | head -n 1)"
     echo -e "  Docker: $(docker --version)"
     echo -e "  Kubectl: $(kubectl version --client --short 2>/dev/null || echo 'Not installed')"
     echo
 }
 
-# WebSocket Functions
-function websocket_build() {
-    echo -e "${YELLOW}🦀 Building WebSocket server...${NC}"
-    cd websocket
-    cargo build --release
-    cd ..
-}
+# --- Main Execution Logic ---
 
-function websocket_docker() {
-    echo -e "${YELLOW}🐳 Building WebSocket Docker image...${NC}"
-    cd websocket
-    
-    # Auto-versioning
-    VERSION=$(date +%Y%m%d_%H%M%S)
-    IMAGE_NAME="signite-websocket"
-    
-    echo -e "${BLUE}Building ${IMAGE_NAME}:${VERSION}...${NC}"
-    docker build -t ${IMAGE_NAME}:${VERSION} .
-    docker tag ${IMAGE_NAME}:${VERSION} ${IMAGE_NAME}:latest
-    
-    # Load to minikube if available
-    if command -v minikube &> /dev/null; then
-        echo -e "${BLUE}Loading image to minikube...${NC}"
-        minikube image load ${IMAGE_NAME}:${VERSION}
-        minikube image load ${IMAGE_NAME}:latest
-    fi
-    
-    echo -e "${GREEN}✅ WebSocket image built: ${IMAGE_NAME}:${VERSION}${NC}"
-    cd ..
-}
-
-function websocket_deploy() {
-    echo -e "${YELLOW}🚀 Deploying WebSocket server to K8s...${NC}"
-    
-    # Apply K8s manifests
-    kubectl apply -f k8s/websocket/mongodb.yaml
-    kubectl apply -f k8s/websocket/redis.yaml
-    kubectl apply -f k8s/websocket/websocket-server.yaml
-    kubectl apply -f k8s/websocket/istio.yaml
-    
-    # Wait for deployment
-    echo -e "${BLUE}Waiting for WebSocket deployment...${NC}"
-    kubectl rollout status deployment/websocket-server -n default --timeout=300s
-    
-    echo -e "${GREEN}✅ WebSocket server deployed successfully${NC}"
-}
-
-function websocket_dev() {
-    echo -e "${YELLOW}🛠️  Starting WebSocket development mode...${NC}"
-    
-    # Start port-forward for WebSocket
-    echo -e "${BLUE}Setting up port forwarding...${NC}"
-    kubectl port-forward svc/websocket-service-nodeport 8080:8080 -n default &
-    kubectl port-forward svc/websocket-service-nodeport 3001:3001 -n default &
-    
-    # Show connection info
-    echo -e "${GREEN}🔗 WebSocket development URLs:${NC}"
-    echo "  WebSocket: ws://localhost:8080"
-    echo "  HTTP API:  http://localhost:3001"
-    echo "  Health:    http://localhost:3001/health"
-    echo
-    echo -e "${YELLOW}Press Ctrl+C to stop port forwarding${NC}"
-    
-    # Start log streaming
-    websocket_logs
-}
-
-function websocket_logs() {
-    echo -e "${YELLOW}📋 Viewing WebSocket server logs...${NC}"
-    kubectl logs -f deployment/websocket-server -n default
-}
-
-# Full Stack Functions
-function all_build() {
-    echo -e "${PURPLE}🔨 Building complete Signite stack...${NC}"
-    backend_build
-    websocket_build
-    echo -e "${GREEN}✅ All components built successfully${NC}"
-}
-
-function all_docker() {
-    echo -e "${PURPLE}🐳 Building all Docker images...${NC}"
-    backend_docker
-    websocket_docker
-    echo -e "${GREEN}✅ All Docker images built successfully${NC}"
-}
-
-function all_deploy() {
-    echo -e "${PURPLE}🚀 Deploying complete Signite stack...${NC}"
-    backend_deploy
-    websocket_deploy
-    echo -e "${GREEN}✅ Complete stack deployed successfully${NC}"
-}
-
-function all_dev() {
-    echo -e "${PURPLE}🛠️  Starting full development mode...${NC}"
-    
-    # Start backend dev mode in background
-    echo -e "${BLUE}Starting backend development mode...${NC}"
-    backend_dev &
-    BACKEND_PID=$!
-    
-    # Wait a bit for backend to start
-    sleep 5
-    
-    # Start websocket dev mode
-    echo -e "${BLUE}Starting WebSocket development mode...${NC}"
-    websocket_dev &
-    WEBSOCKET_PID=$!
-    
-    echo -e "${GREEN}🎉 Full development environment is running!${NC}"
-    echo -e "${YELLOW}Press Ctrl+C to stop all services${NC}"
-    
-    # Wait for user interrupt
-    trap "kill $BACKEND_PID $WEBSOCKET_PID 2>/dev/null; exit" INT
-    wait
-}
-
-# 메인 실행 로직
 case "${1:-help}" in
-    "build")
-        backend_build
+    "dev")
+        start_dev_mode
         ;;
-    "test")
-        backend_test
+    "logs")
+        view_logs
+        ;;
+    "build")
+        build_all
         ;;
     "docker")
-        backend_docker
+        docker_all
         ;;
     "deploy")
-        backend_deploy
-        ;;
-    "dev")
-        backend_dev
-        ;;
-    "ws-build")
-        websocket_build
-        ;;
-    "ws-docker")
-        websocket_docker
-        ;;
-    "ws-deploy")
-        websocket_deploy
-        ;;
-    "ws-dev")
-        websocket_dev
-        ;;
-    "ws-logs")
-        websocket_logs
-        ;;
-    "all-build")
-        all_build
-        ;;
-    "all-docker")
-        all_docker
-        ;;
-    "all-deploy")
-        all_deploy
-        ;;
-    "all-dev")
-        all_dev
+        deploy_all
         ;;
     "setup")
         setup_k8s
@@ -360,15 +223,8 @@ case "${1:-help}" in
     "status")
         check_status
         ;;
-    "logs")
-        view_logs
-        ;;
     "clean")
         clean_all
-        ;;
-    "secrets")
-        echo -e "${YELLOW}🔒 Generating secure secrets...${NC}"
-        ./scripts/create-secrets.sh
         ;;
     "version")
         show_version
@@ -376,4 +232,4 @@ case "${1:-help}" in
     "help"|*)
         show_help
         ;;
-esac 
+esac

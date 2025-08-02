@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: post-db
+  name: auth-db
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: post-db
+      app: auth-db
   template:
     metadata:
       labels:
-        app: post-db
+        app: auth-db
     spec:
       containers:
-      - name: post-db
+      - name: auth-db
         image: mariadb:10.11
         ports:
         - containerPort: 3306
@@ -21,27 +21,29 @@ spec:
         - name: MYSQL_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: post-db-secret
+              name: auth-db-secret
               key: MYSQL_ROOT_PASSWORD
         - name: MYSQL_DATABASE
-          valueFrom:
-            secretKeyRef:
-              name: post-db-secret
-              key: MYSQL_DATABASE
+          value: "authdb"
         - name: MYSQL_USER
           valueFrom:
             secretKeyRef:
-              name: post-db-secret
+              name: auth-db-secret
               key: MYSQL_USER
         - name: MYSQL_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: post-db-secret
+              name: auth-db-secret
               key: MYSQL_PASSWORD
         volumeMounts:
         - name: db-storage
           mountPath: /var/lib/mysql
+        - name: init-script
+          mountPath: /docker-entrypoint-initdb.d
       volumes:
       - name: db-storage
         persistentVolumeClaim:
-          claimName: post-db-pvc
+          claimName: auth-db-pvc
+      - name: init-script
+        configMap:
+          name: auth-db-init

@@ -1,8 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: redis-config
-  namespace: signight
+  name: websocket-redis-config
 data:
   redis.conf: |
     # Redis configuration
@@ -32,20 +31,19 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: redis
-  namespace: signight
+  name: websocket-redis
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: redis
+      app: websocket-redis
   template:
     metadata:
       labels:
-        app: redis
+        app: websocket-redis
     spec:
       containers:
-      - name: redis
+      - name: websocket-redis
         image: redis:7.2-alpine
         ports:
         - containerPort: 6379
@@ -82,7 +80,7 @@ spec:
       volumes:
       - name: redis-config-volume
         configMap:
-          name: redis-config
+          name: websocket-redis-config
       - name: redis-data
         emptyDir: {}
 
@@ -90,11 +88,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis
-  namespace: signight
+  name: websocket-redis
 spec:
   selector:
-    app: redis
+    app: websocket-redis
   ports:
   - port: 6379
     targetPort: 6379

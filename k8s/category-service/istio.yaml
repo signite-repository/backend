@@ -43,7 +43,7 @@ spec:
         prefix: "/actuator/health"
     route:
     - destination:
-        host: category-service-service
+        host: category-service
         port:
           number: 80
   # Prometheus metrics endpoint (internal only)
@@ -52,7 +52,7 @@ spec:
         prefix: "/actuator/prometheus"
     route:
     - destination:
-        host: category-service-service
+        host: category-service
         port:
           number: 80
   # Category API endpoints
@@ -61,7 +61,7 @@ spec:
         prefix: "/api/v1/categories"
     route:
     - destination:
-        host: category-service-service
+        host: category-service
         port:
           number: 80
     timeout: 30s
@@ -71,7 +71,7 @@ spec:
         prefix: "/grpc"
     route:
     - destination:
-        host: category-service-service
+        host: category-service
         port:
           number: 9090
   # Redirect HTTP to HTTPS
@@ -93,7 +93,7 @@ metadata:
   name: category-dr
   namespace: default
 spec:
-  host: category-service-service
+  host: category-service
   trafficPolicy:
     loadBalancer:
       simple: ROUND_ROBIN

@@ -1,82 +1,28 @@
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: mongo-pv
-  namespace: signight
-spec:
-  capacity:
-    storage: 10Gi
-  accessModes:
-    - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: standard
-  hostPath:
-    path: /data/mongo
-
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: mongo-pvc
-  namespace: signight
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
-  storageClassName: standard
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: mongo-config
-  namespace: signight
-data:
-  mongo.conf: |
-    # MongoDB configuration
-    storage:
-      dbPath: /data/db
-      journal:
-        enabled: true
-    systemLog:
-      destination: file
-      logAppend: true
-      path: /var/log/mongodb/mongod.log
-    net:
-      port: 27017
-      bindIp: 0.0.0.0
-    processManagement:
-      timeZoneInfo: /usr/share/zoneinfo
-
----
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: mongo
-  namespace: signight
+  name: websocket-mongo
 spec:
-  serviceName: "mongo"
+  serviceName: "websocket-mongo"
   replicas: 1
   selector:
     matchLabels:
-      app: mongo
+      app: websocket-mongo
   template:
     metadata:
       labels:
-        app: mongo
+        app: websocket-mongo
     spec:
       containers:
-      - name: mongo
+      - name: websocket-mongo
         image: mongo:7.0
         ports:
         - containerPort: 27017
         env:
         - name: MONGO_INITDB_ROOT_USERNAME
-          value: "admin"
+          value: "ydh2244"
         - name: MONGO_INITDB_ROOT_PASSWORD
-          value: "password"
+          value: "1127star"
         - name: MONGO_INITDB_DATABASE
           value: "signight_websocket"
         volumeMounts:
@@ -105,21 +51,20 @@ spec:
       volumes:
       - name: mongo-storage
         persistentVolumeClaim:
-          claimName: mongo-pvc
+          claimName: websocket-mongo-pvc
       - name: mongo-config-volume
         configMap:
-          name: mongo-config
+          name: websocket-mongo-config
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: mongo
-  namespace: signight
+  name: websocket-mongo
 spec:
   ports:
   - port: 27017
     targetPort: 27017
   clusterIP: None
   selector:
-    app: mongo 
+    app: websocket-mongo 

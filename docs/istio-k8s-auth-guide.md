@@ -2,10 +2,10 @@
 
 ## 개요
 
-이 문서는 Category Service에 Istio 기반 인증 및 RBAC(Role-Based Access Control)을 설정하는 방법을 설명합니다. [[memory:4642952]]에 따라 이 프로젝트는 이미 Istio 기반 로그인/로그아웃을 사용하므로, 애플리케이션 레벨 인증이 필요하지 않습니다.
+이 문서는 Category Service에 Istio 기반 인증 및 RBㅣㅣAC(Role-Based Access Control)을 설정하는 방법을 설명합니다. [[memory:4642952]]에 따라 이 프로젝트는 이미 Istio 기반 로그인/로그아웃을 사용하므로, 애플리케이션 레벨 인증이 필요하지 않습니다.
 
 ## 1. 구성 요소
-
+ㅣㅣ
 ### 1.1 생성된 파일들
 - `k8s/category-service/istio.yaml` - Istio Gateway, VirtualService, AuthorizationPolicy
 - `k8s/category-service/rbac.yaml` - Kubernetes RBAC 설정
